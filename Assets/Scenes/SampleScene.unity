@@ -579,7 +579,7 @@ MonoBehaviour:
   m_FillClockwise: 1
   m_FillOrigin: 0
   m_UseSpriteMesh: 0
-  m_PixelsPerUnitMultiplier: 30
+  m_PixelsPerUnitMultiplier: 3000
 --- !u!222 &1942110785
 CanvasRenderer:
   m_ObjectHideFlags: 0
@@ -618,10 +618,6 @@ PrefabInstance:
     - target: {fileID: 2843744034041061768, guid: f4831fbbf3e202cffa170a87169be760, type: 3}
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
-      objectReference: {fileID: 0}
-    - target: {fileID: 2843744034041061768, guid: f4831fbbf3e202cffa170a87169be760, type: 3}
-      propertyPath: m_AnchoredPosition.x
-      value: 30
       objectReference: {fileID: 0}
     - target: {fileID: 2843744034041061775, guid: f4831fbbf3e202cffa170a87169be760, type: 3}
       propertyPath: m_Name

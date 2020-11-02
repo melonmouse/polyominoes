@@ -23,12 +23,57 @@ public static class MyExtensions {
     public static Vector3 Pad(this Vector2 v) {
         return new Vector3(v.x, v.y, 0);
     }
+
+    public static Vector3 GetClampMagnitude(this Vector3 v, float maxLength) {
+        return Vector3.ClampMagnitude(v, maxLength);
+    }
+
+    public static void ClampMagnitude(this Vector3 v, float maxLength) {
+        v = Vector3.ClampMagnitude(v, maxLength);
+    }
 }
 
 public class AchievementManager : MonoBehaviour {
     public GridManager grid_manager;
     public GameObject achievement_container_prefab;
     public GameObject canvas;
+
+    List<GameObject> achievements_shown;
+    List<float> end_times;
+
+    void Start() {
+        achievements_shown = new List<GameObject>();
+        end_times = new List<float>();
+    }
+
+    void Update() {
+        int outdated_index = -1;
+        for (int i = 0; i < achievements_shown.Count; i++) {
+            if (Time.time > end_times[i]) {
+                outdated_index = i;
+            }
+        }
+        for (int i = 0; i < achievements_shown.Count; i++) {
+            Vector3 target_pos;
+            if (i <= outdated_index) {
+                target_pos = new Vector3(-1000, 0, 0);
+            } else {
+                target_pos =
+                        new Vector3((i - outdated_index - 1) * 200, 0, 0);
+            }
+            achievements_shown[i].GetComponent<ObjectLerper>()
+                                 .SetTargetPosition(target_pos);
+        }
+
+        while (achievements_shown.Count > 0 &&
+               achievements_shown[0].GetComponent<RectTransform>()
+                                    .anchoredPosition3D.x < -999) {
+            // fell off screen
+            Destroy(achievements_shown[0]);
+            achievements_shown.RemoveAt(0);
+            end_times.RemoveAt(0);
+        }
+    }
 
     public static Vector3 Times(Vector3 v, Vector3 rhs) {
         return new Vector3(v.x * rhs.x, v.y * rhs.y, v.z * rhs.z);
@@ -44,7 +89,9 @@ public class AchievementManager : MonoBehaviour {
         GameObject drawing = grid_manager.draw_shape(shape, bounds, 1);
         drawing.transform.SetParent(container.transform, false);
 
-        Rect r = container.GetComponent<RectTransform>().rect;
-        r.position = new Vector3(1000, 0, 0);
+        container.GetComponent<RectTransform>().localPosition += 
+                new Vector3(1000, 0, 0);
+        achievements_shown.Add(container);
+        end_times.Add(Time.time + 4f); // show badges for 4 seconds.
     }
 }
