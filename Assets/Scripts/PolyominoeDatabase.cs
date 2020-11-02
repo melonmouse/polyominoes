@@ -5,11 +5,25 @@ using UnityEngine;
 
 using Shape = System.Collections.Generic.SortedSet<(int x, int y)>;
 
+// Alternative grids --
+// Square (4 or 8 neigh, knight neigh), Hex (6 neigh), Triangle (3 or 12 neigh)
+// Penrose:
+// - http://www.math.utah.edu/~treiberg/PenroseSlides.pdf
+// - http://www.scollins.net/_personal/scollins/penrose/
+// - each of the rhombusses has 10 different orientations (36deg)
+// - all sides are same length
+// - big rhombus: 72 + 108 deg (2+3), small rhombus: 36 + 144 (1+4)
+// 3d wieringa roof:
+// - not so accurate but CC-BY: https://sketchfab.com/3d-models/wieringa-roof-7ddc52decc914ed1bfa0f43abfd8e39e
+
 public class PolyominoeDatabase : MonoBehaviour {
+    public AchievementManager achievement_manager;
+
     int max_squares = 8;
     Dictionary<long, Shape>[] polyominoes_found;
     Dictionary<long, Shape>[] polyominoes_all;
-    public PolyominoeDatabase() {
+
+    void Start() {
         initialize();
     }
 
@@ -163,13 +177,15 @@ public class PolyominoeDatabase : MonoBehaviour {
         Shape polyominoe = get_canonical(cells);
         long hash = ShapeHash(polyominoe);
         if (!polyominoes_found[polyominoe.Count].ContainsKey(hash)) {
+            //achievement_manager TODO
+            achievement_manager.AchieveNewShape(polyominoe);
             Debug.Log($"Found new polyominoe of size {polyominoe.Count}!");
             polyominoes_found[polyominoe.Count][hash] = polyominoe;
             if (polyominoes_found[polyominoe.Count].Count == 
                 polyominoes_all[polyominoe.Count].Count) {
                 Debug.Log($"Found all polyominoes of size {polyominoe.Count}!");
             }
-
+            //achievement_manager TODO
         }
     }
 
