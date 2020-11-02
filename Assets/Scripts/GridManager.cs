@@ -6,6 +6,7 @@ using Shape = System.Collections.Generic.SortedSet<(int x, int y)>;
 
 public class GridManager : MonoBehaviour {
     public GameObject cell_prefab;
+    public GameObject cell_prefab_small;
     public GameObject[,] cells;
     public PolyominoeDatabase polyominoe_database;
 
@@ -84,7 +85,7 @@ public class GridManager : MonoBehaviour {
             Vector3 position =
                     bounds.center.Pad() + normalized_pos * bounds.size.Min()/2;
             float effective_size = bounds.size.Min()/shape_bounds.size.Max();
-            GameObject cell = Instantiate(cell_prefab,
+            GameObject cell = Instantiate(cell_prefab_small,
                                           position,
                                           Quaternion.identity);
             cell.transform.SetParent(parent.transform);

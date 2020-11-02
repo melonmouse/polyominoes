@@ -40,8 +40,11 @@ public class AchievementManager : MonoBehaviour {
                                            Quaternion.identity);
         container.transform.SetParent(canvas.transform, false);
 
-        Rect bounds = new Rect(new Vector2(-30, -30), new Vector2(60, 60));
+        Rect bounds = new Rect(new Vector2(-65, -65), new Vector2(130, 130));
         GameObject drawing = grid_manager.draw_shape(shape, bounds, 1);
         drawing.transform.SetParent(container.transform, false);
+
+        Rect r = container.GetComponent<RectTransform>().rect;
+        r.position = new Vector3(1000, 0, 0);
     }
 }
