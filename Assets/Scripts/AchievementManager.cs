@@ -34,7 +34,6 @@ public static class MyExtensions {
 }
 
 public class AchievementManager : MonoBehaviour {
-    public GridManager grid_manager;
     public GameObject achievement_container_prefab;
     public GameObject canvas;
 
@@ -79,19 +78,15 @@ public class AchievementManager : MonoBehaviour {
         return new Vector3(v.x * rhs.x, v.y * rhs.y, v.z * rhs.z);
     }
 
-    public void AchieveNewShape(Shape shape) {
+    public void AddAchievement(GameObject badge_content, float duration=4f) {
         GameObject container = Instantiate(achievement_container_prefab,
                                            new Vector3(0, 0, 0),
                                            Quaternion.identity);
         container.transform.SetParent(canvas.transform, false);
-
-        Rect bounds = new Rect(new Vector2(-65, -65), new Vector2(130, 130));
-        GameObject drawing = grid_manager.draw_shape(shape, bounds, 1);
-        drawing.transform.SetParent(container.transform, false);
-
+        badge_content.transform.SetParent(container.transform, false);
         container.GetComponent<RectTransform>().localPosition += 
                 new Vector3(1000, 0, 0);
         achievements_shown.Add(container);
-        end_times.Add(Time.time + 4f); // show badges for 4 seconds.
+        end_times.Add(Time.time + duration); // show badges for 4 seconds.
     }
 }

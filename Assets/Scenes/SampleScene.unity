@@ -153,6 +153,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   achievement_manager: {fileID: 1126578491}
+  grid_manager: {fileID: 146495368}
+  text_badge_prefab: {fileID: 3215783409363156648, guid: 7c2d317822c4cc358947ab3a75905b6b, type: 3}
 --- !u!4 &13178713
 Transform:
   m_ObjectHideFlags: 0
@@ -325,7 +327,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: deb10fae65868ab41abd8936c731a4d8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  grid_manager: {fileID: 146495368}
   achievement_container_prefab: {fileID: 2843744034041061775, guid: f4831fbbf3e202cffa170a87169be760, type: 3}
   canvas: {fileID: 1942110782}
 --- !u!4 &1126578492
@@ -417,7 +418,7 @@ Canvas:
   m_OverrideSorting: 0
   m_OverridePixelPerfect: 0
   m_SortingBucketNormalizedSize: 0
-  m_AdditionalShaderChannelsFlag: 0
+  m_AdditionalShaderChannelsFlag: 25
   m_SortingLayerID: 0
   m_SortingOrder: 0
   m_TargetDisplay: 0
