@@ -23,6 +23,9 @@ public class GridManager : MonoBehaviour {
     }
     
     public void Start() {
+        polyominoe_database.SetMode(
+                //PolyominoeDatabase.NeighborhoodType.SquareNeumann);
+                PolyominoeDatabase.NeighborhoodType.SquareMoore);
         selected_cells = new Shape();
         int size = (int)Mathf.Ceil(4*Camera.main.orthographicSize);
         cells = new GameObject[size, size];

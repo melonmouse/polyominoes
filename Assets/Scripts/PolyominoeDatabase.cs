@@ -34,10 +34,7 @@ public class PolyominoeDatabase : MonoBehaviour {
     Dictionary<long, Freqs>[] partitions_all;
 
     void Start() {
-        initialize_polymonioes();
-        if (enable_partitions) {
-            initialize_partitions();
-        }
+        
     }
 
     public int smallest_incomplete_polyominoe_set() {
@@ -90,7 +87,7 @@ public class PolyominoeDatabase : MonoBehaviour {
         for (int n_squares = 2; n_squares <= max_squares; n_squares++) {
             foreach (Shape small_shape in polyominoes_all[n_squares-1].Values) {
                 foreach ((int x, int y) cell in small_shape) {
-                    for (int i = 0; i < 4; i++) {
+                    for (int i = 0; i < dx.Count; i++) {
                         (int x, int y) new_cell = (cell.x + dx[i],
                                                    cell.y + dy[i]);
                         if (small_shape.Contains(new_cell)) {
@@ -203,8 +200,32 @@ public class PolyominoeDatabase : MonoBehaviour {
         //return configurations.Min;
     }
 
-    List<int> dx = new List<int>{ 1, -1,  0,  0};
-    List<int> dy = new List<int>{ 0,  0,  1, -1};
+    public enum NeighborhoodType {
+        SquareNeumann,
+        SquareMoore,
+    }
+
+    List<int> dx;
+    List<int> dy;
+    public void SetMode(NeighborhoodType t) {
+        switch (t) {
+          case NeighborhoodType.SquareNeumann:
+            dx = new List<int>{  1, -1,  0,  0};
+            dy = new List<int>{  0,  0,  1, -1};
+            max_squares = 8; // the level finishes after this
+          break;
+          case NeighborhoodType.SquareMoore:
+            dx = new List<int>{  1, -1,  0,  0,  1,  1, -1, -1};
+            dy = new List<int>{  0,  0,  1, -1,  1, -1,  1, -1};
+            max_squares = 6; // the level finishes after this
+          break;
+        }
+        // initialize right after
+        initialize_polymonioes();
+        if (enable_partitions) {
+            initialize_partitions();
+        }
+    }
 
     public List<Shape> query(Shape cells) {
         // returns all components that had a match
@@ -226,7 +247,7 @@ public class PolyominoeDatabase : MonoBehaviour {
                 visited.Add(current_cell);
                 component.Add(current_cell);
 
-                for (int i = 0; i < 4; i++) {
+                for (int i = 0; i < dx.Count; i++) {
                     neighbors.Add((current_cell.x + dx[i],
                                    current_cell.y + dy[i]));
                 }
