@@ -200,6 +200,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   cell_prefab: {fileID: 8302394378287101635, guid: d1c361012e5ea11faa1109f58d5304f8, type: 3}
   cell_prefab_small: {fileID: 184690193597997724, guid: 803b2507e1c1d40d384c53cf0b2f5bd0, type: 3}
+  cell_prefab_square: {fileID: 8302394378287101635, guid: d1c361012e5ea11faa1109f58d5304f8, type: 3}
+  cell_prefab_square_small: {fileID: 184690193597997724, guid: 803b2507e1c1d40d384c53cf0b2f5bd0, type: 3}
+  cell_prefab_hex: {fileID: 3521593935042600244, guid: 576b2081d58d91a9387f0f26f5dc3065, type: 3}
+  cell_prefab_hex_small: {fileID: 184690193597997724, guid: 803b2507e1c1d40d384c53cf0b2f5bd0, type: 3}
   polyominoe_database: {fileID: 13178712}
 --- !u!4 &146495369
 Transform:
@@ -687,7 +691,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8302394378287101635, guid: d1c361012e5ea11faa1109f58d5304f8, type: 3}
       propertyPath: m_IsActive
-      value: 1
+      value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d1c361012e5ea11faa1109f58d5304f8, type: 3}

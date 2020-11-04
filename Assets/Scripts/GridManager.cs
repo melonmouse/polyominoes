@@ -6,33 +6,91 @@ using UnityEngine;
 using Shape = System.Collections.Generic.SortedSet<(int x, int y)>;
 
 public class GridManager : MonoBehaviour {
-    public GameObject cell_prefab;
-    public GameObject cell_prefab_small;
-    public GameObject[,] cells;
+    GameObject cell_prefab;
+    GameObject cell_prefab_small;
+
+    public GameObject cell_prefab_square;
+    public GameObject cell_prefab_square_small;
+
+    public GameObject cell_prefab_hex;
+    public GameObject cell_prefab_hex_small;
+
+    public Dictionary<(int, int),GameObject> cells;
     public PolyominoeDatabase polyominoe_database;
 
     public Shape selected_cells;
     int max_cell_count = 3;
+    GridType grid_type = GridType.Square;
     
+    public enum GridType {
+        Square,
+        Hexagon,
+        Triangle,
+        // TODO nit deduplicate against version in PolyominoeDatabase
+    }
+
+    static float hex_size = 0.6f;
+    Vector3 hex_x_base =
+            new Vector3(3f/2f * hex_size, Mathf.Sqrt(3f)/2f * hex_size, 0);
+    Vector3 hex_y_base =
+            new Vector3(0, Mathf.Sqrt(3) * hex_size, 0);
+
+    static float triangle_size = 1.0f;
+    Vector3 triangle_x_base =
+            new Vector3(1f/2f * triangle_size, 0, 0);
+    Vector3 triangle_y_base =
+            new Vector3(1f/2f * triangle_size,
+                        Mathf.Sqrt(3f)/2f * triangle_size,
+                        0);
+
     public (int x, int y) WorldCoordToIndex(Vector3 pos) {
-        return ((int)Mathf.Floor(pos.x), (int)Mathf.Floor(pos.y));
+        switch (grid_type) {
+          case GridType.Square:
+            return ((int)Mathf.Floor(pos.x), (int)Mathf.Floor(pos.y));
+          case GridType.Hexagon:
+            // TODO round in a way that is perfect
+            return ((int)Mathf.Round(2/3f * pos.x / hex_size),
+                    (int)Mathf.Round((-1/3f * pos.x +
+                                      Mathf.Sqrt(3f)/3f * pos.y) / hex_size));
+        }
+        Debug.Assert(false, "grid_type not set to supported value");
+        return (0,0);
     }
 
     public Vector3 IndexToWorldCoord(float i, float j) {
-        return new Vector3(i, j, 0);
+        switch (grid_type) {
+          case GridType.Square:
+            return new Vector3(i, j, 0);
+          case GridType.Hexagon:
+            return i*hex_x_base + j*hex_y_base;
+            
+        }
+        Debug.Assert(false, "grid_type not set to supported value");
+        return Vector3.zero;
     }
     
     public void Start() {
+        //// Square mode
+        //grid_type = GridType.Square;
+        //polyominoe_database.SetMode(
+        //        PolyominoeDatabase.NeighborhoodType.SquareNeumann);
+        //        //PolyominoeDatabase.NeighborhoodType.SquareMoore);
+        //cell_prefab = cell_prefab_square;
+        //cell_prefab_small = cell_prefab_square_small;
+        // Hex mode
+        grid_type = GridType.Hexagon;
         polyominoe_database.SetMode(
-                //PolyominoeDatabase.NeighborhoodType.SquareNeumann);
-                PolyominoeDatabase.NeighborhoodType.SquareMoore);
+                PolyominoeDatabase.NeighborhoodType.Hexagon);
+        cell_prefab = cell_prefab_hex;
+        cell_prefab_small = cell_prefab_hex_small;
+        
         selected_cells = new Shape();
         int size = (int)Mathf.Ceil(4*Camera.main.orthographicSize);
-        cells = new GameObject[size, size];
-        for (int i = 0; i<size; i++)
-        for (int j = 0; j<size; j++) {
-            cells[i,j] = Instantiate(cell_prefab, IndexToWorldCoord(i, j),
-                                     Quaternion.identity);
+        cells = new Dictionary<(int, int),GameObject>();
+        for (int i = -size; i<size; i++)
+        for (int j = -size; j<size; j++) {
+            cells[(i,j)] = Instantiate(cell_prefab, IndexToWorldCoord(i, j),
+                                       Quaternion.identity);
         }
     }
 
@@ -43,7 +101,7 @@ public class GridManager : MonoBehaviour {
             (int x, int y) cell_index = WorldCoordToIndex(world_pos);
 
             CellState toggled_cell =
-                    cells[cell_index.x, cell_index.y].GetComponent<CellState>();
+                    cells[(cell_index.x, cell_index.y)].GetComponent<CellState>();
             List<Shape> achieved_shapes = new List<Shape>();
             if (toggled_cell.is_selected()) {
                 toggled_cell.set_selected(false);
@@ -64,7 +122,7 @@ public class GridManager : MonoBehaviour {
                 Vector2 center = get_bounds(achieved_shape).center;
                 parent.transform.position = center;
                 foreach ((int x, int y) cell in achieved_shape) {
-                    GameObject duplicate = Instantiate(cells[cell.x, cell.y]);
+                    GameObject duplicate = Instantiate(cells[(cell.x, cell.y)]);
                     duplicate.transform.SetParent(parent.transform);
                     duplicate.GetComponent<CellState>().set_order_in_layer(2);
                     //// choose if achieved shapes get removed or not!

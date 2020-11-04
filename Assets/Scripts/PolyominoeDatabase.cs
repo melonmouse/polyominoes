@@ -25,7 +25,8 @@ public class PolyominoeDatabase : MonoBehaviour {
 
     public GameObject text_badge_prefab;
 
-    int max_squares = 8;
+    int max_squares;
+    int n_rotations;
     Dictionary<long, Shape>[] polyominoes_found;
     Dictionary<long, Shape>[] polyominoes_all;
 
@@ -49,8 +50,9 @@ public class PolyominoeDatabase : MonoBehaviour {
 
     public long ShapeHash(Shape s) {
         long hash = 0;
+        Debug.Assert(max_squares < 11, "Need to choose higher primes!");
         foreach ((int x, int y) in s) {
-            hash += (x + max_squares*y);
+            hash += (x + 11*y);
             hash *= 13;  // some number higher than max_squares, coprime
             // with 2^63-1 (with factors 7, 73, 127, 337, and two big ones).
             // If this is a good hash function int64, collisions would appear
@@ -142,14 +144,35 @@ public class PolyominoeDatabase : MonoBehaviour {
         foreach ( (int x, int y) cell in cells ) {
             (int x, int y) new_cell = cell;
             if (mirror) {
-                new_cell.x *= -1;
+                switch (grid_type) {
+                  case GridType.Square:
+                    new_cell.x *= -1;
+                  break;
+                  case GridType.Hexagon:
+                    int x = new_cell.x;
+                    int y = new_cell.y;
+                    new_cell.x = y;
+                    new_cell.y = x;
+                  break;
+                }
             }
             for (int rot = 0; rot < rotation; rot++) {
                 // rotate clockwize once
+                
+                switch (grid_type) {
+                  case GridType.Square:
                 // (0, 1) -> (1, 0) -> (0, -1) -> (-1, 0) ->
-                int tmp = new_cell.y;
-                new_cell.y = new_cell.x;
-                new_cell.x = -tmp;
+                    int tmp = new_cell.y;
+                    new_cell.y = new_cell.x;
+                    new_cell.x = -tmp;
+                  break;
+                  case GridType.Hexagon:
+                // (0, 1) -> (1, 0) -> (1, -1) -> (0, -1) -> (-1, 0) -> (-1, 1) ->
+                    int z = -(new_cell.x + new_cell.y);
+                    new_cell.y = -new_cell.x;
+                    new_cell.x = -z;
+                  break;
+                }
             }
             result.Add(new_cell);
         }
@@ -184,7 +207,7 @@ public class PolyominoeDatabase : MonoBehaviour {
     public Shape get_canonical(Shape cells) {
         Shape canonical_shape = null;
         long best_hash = System.Int64.MaxValue;
-        for (int rotation = 0; rotation < 4; rotation++) {
+        for (int rotation = 0; rotation < n_rotations; rotation++) {
             for (int mirror = 0; mirror < 2; mirror++) {
                 Shape alt_cells =
                         normalize(rigid_transform(cells, rotation, mirror == 1));
@@ -203,27 +226,72 @@ public class PolyominoeDatabase : MonoBehaviour {
     public enum NeighborhoodType {
         SquareNeumann,
         SquareMoore,
+        Hexagon,
+        TriangleNeumann,
+        TriangleMoore,
     }
+
+    public enum GridType {
+        Square,
+        Hexagon,
+        Triangle,
+    }
+
+    GridType grid_type;
 
     List<int> dx;
     List<int> dy;
     public void SetMode(NeighborhoodType t) {
         switch (t) {
+          // TODO: we need to zoom out for the final levels
+          // maybe allow pinch-zoom?
           case NeighborhoodType.SquareNeumann:
             dx = new List<int>{  1, -1,  0,  0};
             dy = new List<int>{  0,  0,  1, -1};
-            max_squares = 8; // the level finishes after this
+            max_squares = 8; // the level finishes after this (369)
+            n_rotations = 4;
+            grid_type = GridType.Square;
+            // 1, 1, 2, 5, 12, 35, 108, 369, 1285, 4655, 17073, 63600, 238591
           break;
           case NeighborhoodType.SquareMoore:
             dx = new List<int>{  1, -1,  0,  0,  1,  1, -1, -1};
             dy = new List<int>{  0,  0,  1, -1,  1, -1,  1, -1};
-            max_squares = 6; // the level finishes after this
+            max_squares = 6; // the level finishes after this (524)
+            n_rotations = 4;
+            grid_type = GridType.Square;
+            // 1, 2, 5, 22, 94, 524, 3031, 18770, 118133, 758381, 4915652
+          break;
+          case NeighborhoodType.Hexagon:
+            dx = new List<int>{  1, -1,  0,  0,  1, -1};
+            dy = new List<int>{  0,  0,  1, -1, -1,  1};
+            max_squares = 7; // the level finishes after this (333)
+            n_rotations = 6;
+            grid_type = GridType.Hexagon;
+            // 1, 1, 3, 7, 22, 82, 333, 1448, 6572, 30490, 143552, 683101
+          break;
+          case NeighborhoodType.TriangleNeumann:
+            // if x is even, the triangle points up
+            dx = new List<int>{  1, -1, -1};
+            dy = new List<int>{  0,  0,  1};
+            // if x is odd, the triangle points down
+            dx = new List<int>{  1, -1,  1};
+            dy = new List<int>{  0,  0, -1}; // TODO consider this
+            max_squares = 10; // the level finishes after this
+            n_rotations = 3;
+            grid_type = GridType.Triangle;
+          break;
+          case NeighborhoodType.TriangleMoore:
+            // TODO
           break;
         }
         // initialize right after
         initialize_polymonioes();
         if (enable_partitions) {
             initialize_partitions();
+        }
+
+        for (int i = 1; i<= max_squares; i++) {
+            Debug.Log($"{i}: {polyominoes_all[i].Count}");
         }
     }
 
