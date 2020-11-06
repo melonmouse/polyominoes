@@ -25,10 +25,10 @@ public class PolyominoeDatabase : MonoBehaviour {
 
     public GameObject text_badge_prefab;
 
-    int max_cells;
-    int n_rotations;
-    Dictionary<long, Shape>[] polyominoes_found;
-    Dictionary<long, Shape>[] polyominoes_all;
+    protected int max_cells;
+    protected int n_rotations;
+    protected Dictionary<long, Shape>[] polyominoes_found;
+    protected Dictionary<long, Shape>[] polyominoes_all;
 
     bool enable_partitions = false;
     Dictionary<long, Freqs>[] partitions_found;
@@ -171,8 +171,8 @@ public class PolyominoeDatabase : MonoBehaviour {
         Debug.Assert(cube_corner_rot.y % 2 != 0, "Should be odd");
         Debug.Assert(cube_corner_rot.z % 2 != 0, "Should be odd");
         (int x, int y, int z) cube_rot =
-                ((cube_corner_rot.y-1)/2, (cube_corner_rot.z+1)/2,
-                 (cube_corner_rot.x+1)/2);
+                ((cube_corner_rot.x-1)/2, (cube_corner_rot.y+1)/2,
+                 (cube_corner_rot.z+1)/2);
         return cube_rot;
     }
 
@@ -183,9 +183,18 @@ public class PolyominoeDatabase : MonoBehaviour {
             (int x, int y) new_cell = cell;
             if (mirror) {
                 switch (grid_type) {
-                  case GridType.Triangle:
                   case GridType.Square:
                     new_cell.x *= -1;
+                  break;
+                  case GridType.Triangle:
+                    (int x, int y, int z) cube =
+                            triangle_storage_to_cube_coords(new_cell.x,
+                                                            new_cell.y);
+                    (int x_, int y_) rot_storage =
+                            triangle_cube_to_storage_coords(
+                                    (cube.y, cube.x, cube.z));
+                     new_cell.x = rot_storage.x_;
+                     new_cell.y = rot_storage.y_;
                   break;
                   case GridType.Hexagon:
                     int x = new_cell.x;
@@ -269,7 +278,7 @@ public class PolyominoeDatabase : MonoBehaviour {
         f.Sort();
     }
 
-    public Shape get_canonical(Shape cells) {
+    public Shape get_canonical(Shape cells, bool debug=false) {
         Shape canonical_shape = null;
         long best_hash = System.Int64.MaxValue;
         for (int rotation = 0; rotation < n_rotations; rotation++) {
@@ -277,6 +286,10 @@ public class PolyominoeDatabase : MonoBehaviour {
                 Shape alt_cells =
                         normalize(rigid_transform(cells, rotation, mirror == 1));
                 long hash = ShapeHash(alt_cells);
+                if (debug) {
+                    Debug.Log($"Transform ({rotation},{mirror}) = {hash}");
+                    print_shape(alt_cells);
+                }
                 if (hash < best_hash) {
                     best_hash = hash;
                     canonical_shape = alt_cells;
@@ -333,13 +346,12 @@ public class PolyominoeDatabase : MonoBehaviour {
           break;
           case NeighborhoodType.TriangleMoore:
             if (cell.x%2 == 0) {  // if x is even, the triangle points up
-                dx = new List<int>{  1, -1,  1};
-                dy = new List<int>{  0,  0, -1};
+                dx = new List<int>{  1, -1,  1,  2,  3,  2,  0, -1, -2, -2, -1,  0};
+                dy = new List<int>{  0,  0, -1, -1, -1,  0,  1,  1,  1,  0, -1, -1};
             } else {  // if x is odd, the triangle points down
-                dx = new List<int>{  1, -1, -1};
-                dy = new List<int>{  0,  0,  1};
+                dx = new List<int>{  1, -1, -1,  0,  1,  2,  2,  1,  0, -2, -3, -2};
+                dy = new List<int>{  0,  0,  1, -1, -1, -1,  0,  1,  1,  1,  1,  0};
             }
-            // TODO add the additional neighbors
           break;
           default:
             Debug.Assert(false, "NeighborhoodType not set to valid value.");
@@ -363,28 +375,35 @@ public class PolyominoeDatabase : MonoBehaviour {
             n_rotations = 4;
             grid_type = GridType.Square;
             // 1, 1, 2, 5, 12, 35, 108, 369, 1285, 4655, 17073, 63600, 238591
+            //         OK,brz,slv,gold,plat
           break;
           case NeighborhoodType.SquareMoore:
             max_cells = 6; // the level finishes after this (524)
             n_rotations = 4;
             grid_type = GridType.Square;
             // 1, 2, 5, 22, 94, 524, 3031, 18770, 118133, 758381, 4915652
+            //     brz,slv,gold,plat
           break;
           case NeighborhoodType.Hexagon:
             max_cells = 7; // the level finishes after this (333)
             n_rotations = 6;
             grid_type = GridType.Hexagon;
             // 1, 1, 3, 7, 22, 82, 333, 1448, 6572, 30490, 143552, 683101
+            //        brz,slv,gld,plat
           break;
           case NeighborhoodType.TriangleNeumann:
-            max_cells = 6;//10; // the level finishes after this TODO set back
+            max_cells = 9; // the level finishes after this (448)
             n_rotations = 6;
             grid_type = GridType.Triangle;
+            // 1, 1, 3, 4, 12, 24, 66, 160, 448, 1186, 3334, 9235, 26166, 73983
+            //            brz,slv, gld,    plat
           break;
           case NeighborhoodType.TriangleMoore:
-            max_cells = 6;//10; // the level finishes after this TODO set 
+            max_cells = 5; // the level finishes after this (528)
             n_rotations = 6;
             grid_type = GridType.Triangle;
+            // 1, 3, 11, 75, 528, 4573, 40497, 372453
+            //      slv,gld,plat
           break;
         }
         // initialize right after

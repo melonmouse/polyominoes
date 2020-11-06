@@ -15,6 +15,7 @@ public class GridManager : MonoBehaviour {
     public GameObject cell_prefab_hex_small;
     public GameObject cell_prefab_triangle;
     public GameObject cell_prefab_triangle_small;
+    public GameObject cell_prefab_triangle_small_flipped;
 
     public Dictionary<(int, int),GameObject> cells;
     public PolyominoeDatabase polyominoe_database;
@@ -98,8 +99,8 @@ public class GridManager : MonoBehaviour {
           break;
           case GridType.Triangle:
             polyominoe_database.SetMode(
-                    PolyominoeDatabase.NeighborhoodType.TriangleNeumann);
-                    //PolyominoeDatabase.NeighborhoodType.TriangleMoore);
+                    //PolyominoeDatabase.NeighborhoodType.TriangleNeumann);
+                    PolyominoeDatabase.NeighborhoodType.TriangleMoore);
             cell_prefab = cell_prefab_triangle;
             cell_prefab_small = cell_prefab_triangle_small;
           break;
@@ -114,14 +115,14 @@ public class GridManager : MonoBehaviour {
             cells[(i,j)] = Instantiate(cell_prefab, IndexToWorldCoord(i, j),
                                        Quaternion.identity);
 
-            ////////
-            string str = "";
-            str += $"({i},{j})";
-            (int x, int y, int z) p =
-                    PolyominoeDatabase.triangle_storage_to_cube_coords(i, j);
-            str += $"\n({p.x},{p.y},{p.z})";
-            str += $"\n({p.x*2+1},{p.y*2-1},{p.z*2-1})";
-            cells[(i,j)].GetComponent<CellState>().set_text(str);
+            //////// Put coordinates in cells (for debugging, if needed)
+            //string str = "";
+            //str += $"({i-1},{j})";
+            //(int x, int y, int z) p =
+            //        PolyominoeDatabase.triangle_storage_to_cube_coords(i, j);
+            //str += $"\n({p.x},{p.y},{p.z})";
+            //str += $"\n({p.x*2+1},{p.y*2-1},{p.z*2-1})";
+            //cells[(i,j)].GetComponent<CellState>().set_text(str);
             ////////
             
             if (grid_type == GridType.Triangle) {
@@ -133,27 +134,6 @@ public class GridManager : MonoBehaviour {
                             Quaternion.Euler(0, 0, 180f);
                 }
             }
-        }
-
-        Shape test = new Shape();
-        test.Add((0,0));
-        test.Add((1,0));
-        Shape test_alt = new Shape();
-        test_alt.Add((0,0));
-        test_alt.Add((1,-1));
-        Debug.Log("test");
-        PolyominoeDatabase.print_shape(test);
-        Debug.Log("canonical test");
-        PolyominoeDatabase.print_shape(polyominoe_database.get_canonical(test));
-        Debug.Log("test_alt");
-        PolyominoeDatabase.print_shape(test_alt);
-        Debug.Log("canonical test_alt");
-        PolyominoeDatabase.print_shape(polyominoe_database.get_canonical(test_alt));
-
-        for (int rot = 0; rot < 6; rot++) {
-            Debug.Log($"test_alt rot {rot}");
-            PolyominoeDatabase.print_shape(
-                    polyominoe_database.rigid_transform(test_alt, rot, false));
         }
 
     }
@@ -285,18 +265,14 @@ public class GridManager : MonoBehaviour {
             prefabs.Add(cell_prefab_small);
           break;
           case GridType.Triangle:
-            GameObject flipped_prefab = Instantiate(cell_prefab_small);
-            flipped_prefab.transform.localRotation =
-                            Quaternion.Euler(0, 0, 180f);
             foreach ((int x, int y) p in shape) {
                 // we rely on ordering of shape being constant
-                if (p.x % 2 == 1) {
-                    prefabs.Add(flipped_prefab);
+                if (p.x % 2 != 0) {
+                    prefabs.Add(cell_prefab_triangle_small_flipped);
                 } else {
                     prefabs.Add(cell_prefab_small);
                 }
             }
-            Destroy(flipped_prefab);
           break;
         }
         return draw_cells(normalized_positions, prefabs, bounds, block_size, 
@@ -318,6 +294,9 @@ public class GridManager : MonoBehaviour {
         float block_size =
                 Mathf.Min(0.9f*Mathf.Sqrt(2)/2*(Mathf.PI * 0.7f * bounds.size.Max())/count,
                           bounds.size.Max()/2);
+        if (grid_type == GridType.Triangle) {
+            block_size /= 1.9f;
+        }
         List<GameObject> prefabs = new List<GameObject>();
         prefabs.Add(cell_prefab_small);
         GameObject badge_content = draw_cells(normalized_positions, prefabs,
