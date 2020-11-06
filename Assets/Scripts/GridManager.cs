@@ -11,9 +11,10 @@ public class GridManager : MonoBehaviour {
 
     public GameObject cell_prefab_square;
     public GameObject cell_prefab_square_small;
-
     public GameObject cell_prefab_hex;
     public GameObject cell_prefab_hex_small;
+    public GameObject cell_prefab_triangle;
+    public GameObject cell_prefab_triangle_small;
 
     public Dictionary<(int, int),GameObject> cells;
     public PolyominoeDatabase polyominoe_database;
@@ -35,7 +36,7 @@ public class GridManager : MonoBehaviour {
     Vector3 hex_y_base =
             new Vector3(0, Mathf.Sqrt(3) * hex_size, 0);
 
-    static float triangle_size = 1.0f;
+    static float triangle_size = 1.8f;
     Vector3 triangle_x_base =
             new Vector3(1f/2f * triangle_size, 0, 0);
     Vector3 triangle_y_base =
@@ -52,6 +53,12 @@ public class GridManager : MonoBehaviour {
             return ((int)Mathf.Round(2/3f * pos.x / hex_size),
                     (int)Mathf.Round((-1/3f * pos.x +
                                       Mathf.Sqrt(3f)/3f * pos.y) / hex_size));
+          case GridType.Triangle:
+            // TODO round in a way that is perfect
+            return ((int)Mathf.Round((pos.x - pos.y / Mathf.Sqrt(3f)) *
+                                     2/triangle_size),
+                    (int)Mathf.Round(pos.y / Mathf.Sqrt(3f) * 2/triangle_size));
+            
         }
         Debug.Assert(false, "grid_type not set to supported value");
         return (0,0);
@@ -63,7 +70,8 @@ public class GridManager : MonoBehaviour {
             return new Vector3(i, j, 0);
           case GridType.Hexagon:
             return i*hex_x_base + j*hex_y_base;
-            
+          case GridType.Triangle:
+            return i*triangle_x_base + j*triangle_y_base;
         }
         Debug.Assert(false, "grid_type not set to supported value");
         return Vector3.zero;
@@ -72,25 +80,58 @@ public class GridManager : MonoBehaviour {
     public void Start() {
         //// Square mode
         //grid_type = GridType.Square;
-        //polyominoe_database.SetMode(
-        //        PolyominoeDatabase.NeighborhoodType.SquareNeumann);
-        //        //PolyominoeDatabase.NeighborhoodType.SquareMoore);
-        //cell_prefab = cell_prefab_square;
-        //cell_prefab_small = cell_prefab_square_small;
-        // Hex mode
-        grid_type = GridType.Hexagon;
-        polyominoe_database.SetMode(
-                PolyominoeDatabase.NeighborhoodType.Hexagon);
-        cell_prefab = cell_prefab_hex;
-        cell_prefab_small = cell_prefab_hex_small;
+        //grid_type = GridType.Hexagon;
+        grid_type = GridType.Triangle;
+        switch (grid_type) {
+          case GridType.Square:
+            polyominoe_database.SetMode(
+                    PolyominoeDatabase.NeighborhoodType.SquareNeumann);
+                    //PolyominoeDatabase.NeighborhoodType.SquareMoore);
+            cell_prefab = cell_prefab_square;
+            cell_prefab_small = cell_prefab_square_small;
+          break;
+          case GridType.Hexagon:
+            polyominoe_database.SetMode(
+                    PolyominoeDatabase.NeighborhoodType.Hexagon);
+            cell_prefab = cell_prefab_hex;
+            cell_prefab_small = cell_prefab_hex_small;
+          break;
+          case GridType.Triangle:
+            polyominoe_database.SetMode(
+                    PolyominoeDatabase.NeighborhoodType.TriangleNeumann);
+                    //PolyominoeDatabase.NeighborhoodType.TriangleMoore);
+            cell_prefab = cell_prefab_triangle;
+            cell_prefab_small = cell_prefab_triangle_small;
+          break;
+        }
         
         selected_cells = new Shape();
         int size = (int)Mathf.Ceil(4*Camera.main.orthographicSize);
         cells = new Dictionary<(int, int),GameObject>();
         for (int i = -size; i<size; i++)
         for (int j = -size; j<size; j++) {
+            // TODO use a shape / draw_cells here
             cells[(i,j)] = Instantiate(cell_prefab, IndexToWorldCoord(i, j),
                                        Quaternion.identity);
+
+            ////////
+            string str = "";
+            str += $"({i},{j})";
+            (int w, int y, int z) p =
+                    PolyominoeDatabase.get_triangle_cube_coordinates(i, j);
+            str += $"\n({p.w},{p.y},{p.z})";
+            cells[(i,j)].GetComponent<CellState>().set_text(str);
+            ////////
+            
+            if (grid_type == GridType.Triangle) {
+                if ((i % 2 + 2) % 2 == 1) {
+                    cells[(i,j)].transform.localRotation =
+                            Quaternion.Euler(0, 0, 180f);
+                    cells[(i,j)].GetComponent<CellState>().debug_text
+                                .gameObject.transform.localRotation = 
+                            Quaternion.Euler(0, 0, 180f);
+                }
+            }
         }
     }
 
@@ -151,15 +192,22 @@ public class GridManager : MonoBehaviour {
         return result;
     }
 
-    public GameObject draw_squares(List<Vector3> normalized_positions,
-                                   Rect bounds, float block_size,
-                                   int order_in_layer=0) {
+    public GameObject draw_cells(List<Vector3> normalized_positions,
+                                 List<GameObject> prefabs,
+                                 Rect bounds, float block_size,
+                                 int order_in_layer=0) {
+        // TODO generalize to allow different prefabs (for e.g. triangles)
         GameObject parent = new GameObject();
         parent.AddComponent<RectTransform>();
-        foreach (Vector3 normalized_pos in normalized_positions) {
+        Debug.Assert(prefabs.Count == 1 ||
+                     normalized_positions.Count == prefabs.Count,
+                     "Mismatch between prefab and position counts");
+        for (int i = 0; i < normalized_positions.Count; i++) {
+            Vector3 normalized_pos = normalized_positions[i];
             Vector3 position =
                     bounds.center.Pad() + normalized_pos * bounds.size.Min()/2;
-            GameObject cell = Instantiate(cell_prefab_small,
+            GameObject prefab = (prefabs.Count == 1 ? prefabs[0] : prefabs[i]);
+            GameObject cell = Instantiate(prefab,
                                           position,
                                           Quaternion.identity);
             cell.transform.SetParent(parent.transform);
@@ -207,8 +255,29 @@ public class GridManager : MonoBehaviour {
                 // normalized_pos is in the [-1, 1]x[-1, 1] square
             normalized_positions.Add(normalized_pos);
         }
-        return draw_squares(normalized_positions, bounds, block_size, 
-                            order_in_layer);
+        List<GameObject> prefabs = new List<GameObject>();
+        switch (grid_type) {
+          case GridType.Square:
+          case GridType.Hexagon:
+            prefabs.Add(cell_prefab_small);
+          break;
+          case GridType.Triangle:
+            GameObject flipped_prefab = Instantiate(cell_prefab_small);
+            flipped_prefab.transform.localRotation =
+                            Quaternion.Euler(0, 0, 180f);
+            foreach ((int x, int y) p in shape) {
+                // we rely on ordering of shape being constant
+                if (p.x % 2 == 1) {
+                    prefabs.Add(flipped_prefab);
+                } else {
+                    prefabs.Add(cell_prefab_small);
+                }
+            }
+            Destroy(flipped_prefab);
+          break;
+        }
+        return draw_cells(normalized_positions, prefabs, bounds, block_size, 
+                          order_in_layer);
     }
 
     public GameObject draw_circ(int count, Rect bounds, int order_in_layer=0) {
@@ -226,8 +295,11 @@ public class GridManager : MonoBehaviour {
         float block_size =
                 Mathf.Min(0.9f*Mathf.Sqrt(2)/2*(Mathf.PI * 0.7f * bounds.size.Max())/count,
                           bounds.size.Max()/2);
-        GameObject badge_content =  draw_squares(normalized_positions, bounds, 
-                                                 block_size, order_in_layer);
+        List<GameObject> prefabs = new List<GameObject>();
+        prefabs.Add(cell_prefab_small);
+        GameObject badge_content = draw_cells(normalized_positions, prefabs,
+                                              bounds, block_size,
+                                              order_in_layer);
 
         float rot_speed = 360/2;
         foreach (RectTransform rt in

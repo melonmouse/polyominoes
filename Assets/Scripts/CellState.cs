@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using TMPro;
 using UnityEngine.Assertions;
 
 public class CellState : MonoBehaviour {
@@ -10,6 +11,7 @@ public class CellState : MonoBehaviour {
     public GameObject deselected_sprite;
     public GameObject selected_image;
     public GameObject deselected_image;
+    public TMP_Text debug_text;
 
     public bool is_selected() {
         return selected;
@@ -34,6 +36,11 @@ public class CellState : MonoBehaviour {
             image_mode = m;
             update_gameobject();
         }
+    }
+
+    public void set_text(string s) {
+        debug_text.text = s;
+        debug_text.gameObject.transform.rotation = Quaternion.identity;
     }
 
     void Start() {
