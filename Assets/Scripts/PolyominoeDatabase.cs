@@ -136,11 +136,44 @@ public class PolyominoeDatabase : MonoBehaviour {
         }
     }
 
-    static public (int, int, int) get_triangle_cube_coordinates(int x, int y) {
-        // TODO this is for debug purposes
-        int w = -(x / 2);  // yes, integer division
-        int z = (x % 2) - y - w;
-        return (w, y, z);
+    static public (int x, int y, int z)
+            triangle_storage_to_cube_coords(int i, int j) {
+        // NOTE: the input x and y have are different axes than output x and y.
+        int z = -j;
+        int x = -i / 2 + (i < 0 ? (i % 2 + 2) % 2 : 0); 
+        // NOTE: x is simply -x_/2 with integer division towards -inf.
+        int y = (i % 2 + 2) % 2 - z - x;
+        return (x, y, z);
+    }
+
+    static public (int i, int j)
+        triangle_cube_to_storage_coords((int x, int y, int z) c) {
+        return (-2*c.x + (c.x+c.y+c.z), -c.z);
+        // note that the orientation of the triangle is constant,
+        // so x_%2 = (x+y+z) must be constant.
+
+        //cube.x + cube.y + cube.z ==
+        //                         (new_cell.x % 2 + 2)%2 == i mod 2
+    }
+
+    static public (int x, int y, int z)
+        rot_triangle_cube_once((int x, int y, int z) cube) {
+        // Shift to lower right corner of the cube.
+        // NOTE to keep stuff integer, we double the coordinates,
+        // rather than just adding 0.5, -0.5, -0.5.
+        (int x, int y, int z) cube_corner =
+                (2*cube.x+1, 2*cube.y-1, 2*cube.z-1);
+        // rotate w -> y -> z ->
+        (int x, int y, int z) cube_corner_rot =
+                (-cube_corner.y, -cube_corner.z, -cube_corner.x);
+        // Shift back.
+        Debug.Assert(cube_corner_rot.x % 2 != 0, "Should be odd");
+        Debug.Assert(cube_corner_rot.y % 2 != 0, "Should be odd");
+        Debug.Assert(cube_corner_rot.z % 2 != 0, "Should be odd");
+        (int x, int y, int z) cube_rot =
+                ((cube_corner_rot.y-1)/2, (cube_corner_rot.z+1)/2,
+                 (cube_corner_rot.x+1)/2);
+        return cube_rot;
     }
 
     public Shape rigid_transform(Shape cells, int rotation, bool mirror) {
@@ -182,18 +215,18 @@ public class PolyominoeDatabase : MonoBehaviour {
                   case GridType.Triangle:
                   {
                     // see triangle_grids_wtf.jpg
-                    int w = -(new_cell.x / 2);  // yes, integer division
-                    int z = (new_cell.x % 2) - new_cell.y - w;
-                    Debug.Assert(w + new_cell.y + z == new_cell.x % 2,
+                    (int x, int y, int z) cube =
+                            triangle_storage_to_cube_coords(new_cell.x,
+                                                            new_cell.y);
+                    Debug.Assert(cube.x + cube.y + cube.z ==
+                                 (new_cell.x % 2 + 2)%2,
                                  "I don't understand triangles.");
-                    // rotate w -> y -> z ->
-                    int rot_w = new_cell.y;
-                    int rot_y = z;
-                    int rot_z = w;
-                    new_cell.y = rot_y;
-                    new_cell.x = -2*rot_w + (new_cell.x % 2);
-                    // note that the orientation of the triangle is constant,
-                    // so x%2 must be constant.
+                    (int x, int y, int z) rot_cube =
+                                    rot_triangle_cube_once(cube);
+                    (int x_, int y_) rot_storage =
+                            triangle_cube_to_storage_coords(rot_cube);
+                    new_cell.x = rot_storage.x_;
+                    new_cell.y = rot_storage.y_;
                     // I think i need 3 more rotations (the flipped ones)
                   }
                   break;
@@ -221,7 +254,8 @@ public class PolyominoeDatabase : MonoBehaviour {
         if (grid_type == GridType.Triangle) {
             // On the triangle grid, we can only translate (in x) over even
             // distances without changing the shape.
-            min_x -= (min_x % 2);
+            min_x -= (min_x % 2 + 2) % 2;
+            Debug.Assert(min_x % 2 == 0, "Cannot shift over odd x!");
         }
 
         Shape normalized_cells = new Shape();
@@ -344,12 +378,12 @@ public class PolyominoeDatabase : MonoBehaviour {
           break;
           case NeighborhoodType.TriangleNeumann:
             max_cells = 6;//10; // the level finishes after this TODO set back
-            n_rotations = 3;
+            n_rotations = 6;
             grid_type = GridType.Triangle;
           break;
           case NeighborhoodType.TriangleMoore:
             max_cells = 6;//10; // the level finishes after this TODO set 
-            n_rotations = 3;
+            n_rotations = 6;
             grid_type = GridType.Triangle;
           break;
         }
@@ -404,7 +438,7 @@ public class PolyominoeDatabase : MonoBehaviour {
         return result;
     }
 
-    void print_shape(Shape s) {
+    static public void print_shape(Shape s) {
         foreach ((int x, int y) p in s) {
             Debug.Log($"({p.x}, {p.y})");
         }

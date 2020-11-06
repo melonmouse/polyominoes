@@ -117,9 +117,10 @@ public class GridManager : MonoBehaviour {
             ////////
             string str = "";
             str += $"({i},{j})";
-            (int w, int y, int z) p =
-                    PolyominoeDatabase.get_triangle_cube_coordinates(i, j);
-            str += $"\n({p.w},{p.y},{p.z})";
+            (int x, int y, int z) p =
+                    PolyominoeDatabase.triangle_storage_to_cube_coords(i, j);
+            str += $"\n({p.x},{p.y},{p.z})";
+            str += $"\n({p.x*2+1},{p.y*2-1},{p.z*2-1})";
             cells[(i,j)].GetComponent<CellState>().set_text(str);
             ////////
             
@@ -133,6 +134,28 @@ public class GridManager : MonoBehaviour {
                 }
             }
         }
+
+        Shape test = new Shape();
+        test.Add((0,0));
+        test.Add((1,0));
+        Shape test_alt = new Shape();
+        test_alt.Add((0,0));
+        test_alt.Add((1,-1));
+        Debug.Log("test");
+        PolyominoeDatabase.print_shape(test);
+        Debug.Log("canonical test");
+        PolyominoeDatabase.print_shape(polyominoe_database.get_canonical(test));
+        Debug.Log("test_alt");
+        PolyominoeDatabase.print_shape(test_alt);
+        Debug.Log("canonical test_alt");
+        PolyominoeDatabase.print_shape(polyominoe_database.get_canonical(test_alt));
+
+        for (int rot = 0; rot < 6; rot++) {
+            Debug.Log($"test_alt rot {rot}");
+            PolyominoeDatabase.print_shape(
+                    polyominoe_database.rigid_transform(test_alt, rot, false));
+        }
+
     }
 
     public void Update() {
