@@ -114,6 +114,7 @@ public class GridManager : MonoBehaviour {
             // TODO use a shape / draw_cells here
             cells[(i,j)] = Instantiate(cell_prefab, IndexToWorldCoord(i, j),
                                        Quaternion.identity);
+            cells[(i,j)].GetComponent<CellState>().coordinate = (i, j);
 
             //////// Put coordinates in cells (for debugging, if needed)
             //string str = "";
@@ -135,7 +136,6 @@ public class GridManager : MonoBehaviour {
                 }
             }
         }
-
     }
 
     public void Update() {

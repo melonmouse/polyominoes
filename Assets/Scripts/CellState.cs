@@ -13,6 +13,8 @@ public class CellState : MonoBehaviour {
     public GameObject deselected_image;
     public TMP_Text debug_text;
 
+    public (int, int) coordinate;
+
     public bool is_selected() {
         return selected;
     }
