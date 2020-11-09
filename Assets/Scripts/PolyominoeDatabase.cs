@@ -25,12 +25,13 @@ public enum GridType {
     Triangle,
 }
 
-public class PolyominoeDatabase : MonoBehaviour {
+public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
     public AchievementManager achievement_manager;
     public GridManager grid_manager;
 
     public GameObject text_badge_prefab;
     public GameObject badge_drawer;
+    public GameObject badge_drawer_container;
 
     protected int max_cells;
     protected int n_rotations;
@@ -43,6 +44,14 @@ public class PolyominoeDatabase : MonoBehaviour {
 
     void Start() {
         
+    }
+
+    public void RegisterClick() {
+        bool was_active = badge_drawer_container.activeSelf;
+        badge_drawer_container.SetActive(!was_active);
+        if (!was_active) {
+            RenderAllBadges();
+        }
     }
 
     public int smallest_incomplete_polyominoe_set() {
@@ -401,7 +410,7 @@ public class PolyominoeDatabase : MonoBehaviour {
             max_cells = 5; // the level finishes after this (675)
             n_rotations = 6;
             grid_type = GridType.Hexagon;
-            // 1, 1, 3, 7, 22, 82, 333, 1448, 6572, 30490, 143552, 683101
+            // 1, 1, 1, 2, 9, 70, 675, 7863, 94721  (NOT ON OEIS)
             //        brz,slv,gld,plat
           break;
           case NeighborhoodType.TriangleNeumann:
@@ -415,7 +424,7 @@ public class PolyominoeDatabase : MonoBehaviour {
             max_cells = 5; // the level finishes after this (528)
             n_rotations = 6;
             grid_type = GridType.Triangle;
-            // 1, 3, 11, 75, 528, 4573, 40497, 372453
+            // 1, 3, 11, 75, 528, 4573, 40497, 372453  (NOT ON OEIS)
             //      slv,gld,plat
           break;
         }
@@ -476,27 +485,53 @@ public class PolyominoeDatabase : MonoBehaviour {
         }
     }
 
+    public void DestroyAllChildren(GameObject o) {
+        for (int i = 0; i < o.transform.childCount; i++) {
+            Destroy(o.transform.GetChild(i).gameObject);
+        }
+    }
+
     public void RenderAllBadges() {
-        for (int size = 1; size <= max_cells; size++) {
+        float y_offset = 140;
+        int max_size = smallest_incomplete_polyominoe_set();
+
+        DestroyAllChildren(badge_drawer);
+
+        for (int size = 1; size <= max_size; size++) {
             // TODO show header for this size
             int badge_count = 0;
+
+            int max_badge_y = 0;
             foreach (var item in polyominoes_all[size]) {
+                int badge_x = badge_count % 4;
+                int badge_y = badge_count / 4;
+                GameObject badge_content;
                 if (polyominoes_found[size].ContainsKey(item.Key)) {
                     Rect bounds = new Rect(
                             new Vector2(-65, -65), new Vector2(130, 130));
-                    GameObject drawing = grid_manager.draw_shape(
-                            item.Value, bounds, 1);
-                    GameObject badge = achievement_manager.GetBadge(drawing);
-                    badge.transform.SetParent(badge_drawer.transform, false);
-
-                    int badge_x = badge_count % 10;
-                    int badge_y = badge_count / 10;
-                    badge.transform.localPosition += 
-                            new Vector3(badge_x*200, badge_y*200, 0);
+                    badge_content = grid_manager.draw_shape(item.Value,
+                                                            bounds, 1);
+                } else {
+                    badge_content = Instantiate(text_badge_prefab, Vector3.zero,
+                                                Quaternion.identity);
+                    badge_content.GetComponent<TMP_Text>().text = "?";
                 }
+                GameObject badge = achievement_manager.GetBadge(badge_content);
+                badge.GetComponent<ObjectLerper>().enabled = false;
+                badge.transform.SetParent(badge_drawer.transform, false);
+                RectTransform rt = badge.GetComponent<RectTransform>();
+                rt.anchorMax = new Vector2(0, 1);
+                rt.anchorMin = new Vector2(0, 1);
+                rt.anchoredPosition3D = new Vector3(
+                        (badge_x+0.5f)*200, -badge_y*200 - y_offset, 0);
                 badge_count++;
+                max_badge_y = badge_y;
             }
+            y_offset += (max_badge_y+1.2f)*200;
         }
+        badge_drawer.GetComponent<RectTransform>().sizeDelta =
+                new Vector2(0, y_offset + 100);
+        // dynamically scale the scroll area to size of content
     }
 
     public void AchieveNewShape(Shape shape) {

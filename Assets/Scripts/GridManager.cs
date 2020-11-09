@@ -5,7 +5,7 @@ using UnityEngine;
 
 using Shape = System.Collections.Generic.SortedSet<(int x, int y)>;
 
-public class GridManager : MonoBehaviour {
+public class GridManager : MonoBehaviour, IClickableObject {
     GameObject cell_prefab;
     GameObject cell_prefab_small;
 
@@ -135,62 +135,65 @@ public class GridManager : MonoBehaviour {
         }
     }
 
-    public void Update() {
-        if (Input.GetMouseButtonDown(0)) {
-            Vector3 world_pos =
-                    Camera.main.ScreenToWorldPoint(Input.mousePosition);
+    public void RegisterClick() {
+        Vector3 world_pos =
+                Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
-			RaycastHit2D hit = Physics2D.Raycast(
-                    new Vector2(world_pos.x, world_pos.y), Vector2.zero);
-			if (hit.collider == null){
-                return;
-            }
-            (int x, int y) cell_index = hit.collider.transform.parent.gameObject
-                                           .GetComponent<CellState>().coordinate;
+        RaycastHit2D hit = Physics2D.Raycast(
+                new Vector2(world_pos.x, world_pos.y), Vector2.zero);
+        if (hit.collider == null){
+            return;
+        }
+        (int x, int y) cell_index = hit.collider.transform.parent.gameObject
+                                       .GetComponent<CellState>().coordinate;
 
-            //(int x, int y) cell_index = WorldCoordToIndex(world_pos);
+        // // The following works, but rounding can be off.
+        //(int x, int y) cell_index = WorldCoordToIndex(world_pos);
 
-            CellState toggled_cell =
-                    cells[(cell_index.x, cell_index.y)].GetComponent<CellState>();
-            List<Shape> achieved_shapes = new List<Shape>();
-            if (toggled_cell.is_selected()) {
-                toggled_cell.set_selected(false);
-                selected_cells.Remove(cell_index);
+        CellState toggled_cell =
+                cells[(cell_index.x, cell_index.y)].GetComponent<CellState>();
+        List<Shape> achieved_shapes = new List<Shape>();
+        if (toggled_cell.is_selected()) {
+            toggled_cell.set_selected(false);
+            selected_cells.Remove(cell_index);
+            achieved_shapes = polyominoe_database.query(selected_cells);
+        } else {
+            if (selected_cells.Count < max_cell_count) {
+                toggled_cell.set_selected(true);
+                selected_cells.Add(cell_index);
                 achieved_shapes = polyominoe_database.query(selected_cells);
             } else {
-                if (selected_cells.Count < max_cell_count) {
-                    toggled_cell.set_selected(true);
-                    selected_cells.Add(cell_index);
-                    achieved_shapes = polyominoe_database.query(selected_cells);
-                } else {
-                    // TODO show something to show selection failed.
-                }
+                // TODO show something to show selection failed.
             }
-
-            foreach (Shape achieved_shape in achieved_shapes) {
-                GameObject parent = new GameObject();
-                Vector2 center = get_bounds(achieved_shape).center;
-                parent.transform.position = center;
-                foreach ((int x, int y) cell in achieved_shape) {
-                    GameObject duplicate = Instantiate(cells[(cell.x, cell.y)]);
-                    duplicate.transform.SetParent(parent.transform);
-                    duplicate.GetComponent<CellState>().set_order_in_layer(2);
-                    //// choose if achieved shapes get removed or not!
-                    //// I think its better to not remove them.
-                    //cells[cell.x, cell.y].GetComponent<CellState>()
-                    //                     .set_selected(false);
-                    //selected_cells.Remove(cell);
-                }
-                parent.AddComponent<TRotator>();
-                parent.AddComponent<ObjectLerper>();
-                parent.GetComponent<ObjectLerper>().rect_transform_mode = false;
-                parent.GetComponent<ObjectLerper>().SetTargetPosition(
-                        new Vector3(center.x + 30, center.y/2, 0));
-            }
-
-            max_cell_count =
-                    polyominoe_database.smallest_incomplete_polyominoe_set();
         }
+
+        foreach (Shape achieved_shape in achieved_shapes) {
+            GameObject parent = new GameObject();
+            Vector2 center = get_bounds(achieved_shape).center;
+            parent.transform.position = center;
+            foreach ((int x, int y) cell in achieved_shape) {
+                GameObject duplicate = Instantiate(cells[(cell.x, cell.y)]);
+                duplicate.transform.SetParent(parent.transform);
+                duplicate.GetComponent<CellState>().set_order_in_layer(2);
+                //// choose if achieved shapes get removed or not!
+                //// I think its better to not remove them.
+                //cells[cell.x, cell.y].GetComponent<CellState>()
+                //                     .set_selected(false);
+                //selected_cells.Remove(cell);
+            }
+            parent.AddComponent<TRotator>();
+            parent.AddComponent<ObjectLerper>();
+            parent.GetComponent<ObjectLerper>().rect_transform_mode = false;
+            parent.GetComponent<ObjectLerper>().SetTargetPosition(
+                    new Vector3(center.x + 30, center.y/2, 0));
+        }
+
+        max_cell_count =
+                polyominoe_database.smallest_incomplete_polyominoe_set();
+    }
+
+
+    public void Update() {
     }
 
     // MYBRARY
