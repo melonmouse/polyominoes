@@ -78,15 +78,20 @@ public class AchievementManager : MonoBehaviour {
         return new Vector3(v.x * rhs.x, v.y * rhs.y, v.z * rhs.z);
     }
 
-    public void AddAchievement(GameObject badge_content, float duration=4f) {
+    public GameObject GetBadge(GameObject badge_content) {
         GameObject container = Instantiate(achievement_container_prefab,
                                            new Vector3(0, 0, 0),
                                            Quaternion.identity);
-        container.transform.SetParent(canvas.transform, false);
         badge_content.transform.SetParent(container.transform, false);
-        container.GetComponent<RectTransform>().localPosition += 
+        return container;
+    }
+
+    public void AddAchievement(GameObject badge_content, float duration=4f) {
+        GameObject badge = GetBadge(badge_content);
+        badge.transform.SetParent(canvas.transform, false);
+        badge.GetComponent<RectTransform>().localPosition += 
                 new Vector3(1000, 0, 0);
-        achievements_shown.Add(container);
+        achievements_shown.Add(badge);
         end_times.Add(Time.time + duration); // show badges for 4 seconds.
     }
 }

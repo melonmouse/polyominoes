@@ -22,7 +22,7 @@ public class GridManager : MonoBehaviour {
 
     public Shape selected_cells;
     int max_cell_count = 3;
-    GridType grid_type = GridType.Square;
+    GridType grid_type = GridType.Hexagon;
     
     public enum GridType {
         Square,
@@ -79,10 +79,6 @@ public class GridManager : MonoBehaviour {
     }
     
     public void Start() {
-        //// Square mode
-        //grid_type = GridType.Square;
-        //grid_type = GridType.Hexagon;
-        grid_type = GridType.Triangle;
         switch (grid_type) {
           case GridType.Square:
             polyominoe_database.SetMode(
@@ -93,7 +89,8 @@ public class GridManager : MonoBehaviour {
           break;
           case GridType.Hexagon:
             polyominoe_database.SetMode(
-                    PolyominoeDatabase.NeighborhoodType.Hexagon);
+                    //PolyominoeDatabase.NeighborhoodType.Hexagon);
+                    PolyominoeDatabase.NeighborhoodType.HexagonJump);
             cell_prefab = cell_prefab_hex;
             cell_prefab_small = cell_prefab_hex_small;
           break;
@@ -118,7 +115,7 @@ public class GridManager : MonoBehaviour {
 
             //////// Put coordinates in cells (for debugging, if needed)
             //string str = "";
-            //str += $"({i-1},{j})";
+            //str += $"({i},{j})";
             //(int x, int y, int z) p =
             //        PolyominoeDatabase.triangle_storage_to_cube_coords(i, j);
             //str += $"\n({p.x},{p.y},{p.z})";
@@ -142,7 +139,16 @@ public class GridManager : MonoBehaviour {
         if (Input.GetMouseButtonDown(0)) {
             Vector3 world_pos =
                     Camera.main.ScreenToWorldPoint(Input.mousePosition);
-            (int x, int y) cell_index = WorldCoordToIndex(world_pos);
+
+			RaycastHit2D hit = Physics2D.Raycast(
+                    new Vector2(world_pos.x, world_pos.y), Vector2.zero);
+			if (hit.collider == null){
+                return;
+            }
+            (int x, int y) cell_index = hit.collider.transform.parent.gameObject
+                                           .GetComponent<CellState>().coordinate;
+
+            //(int x, int y) cell_index = WorldCoordToIndex(world_pos);
 
             CellState toggled_cell =
                     cells[(cell_index.x, cell_index.y)].GetComponent<CellState>();

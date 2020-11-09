@@ -19,11 +19,18 @@ using Freqs = System.Collections.Generic.List<int>;
 // 3d wieringa roof:
 // - not so accurate but CC-BY: https://sketchfab.com/3d-models/wieringa-roof-7ddc52decc914ed1bfa0f43abfd8e39e
 
+public enum GridType {
+    Square,
+    Hexagon,
+    Triangle,
+}
+
 public class PolyominoeDatabase : MonoBehaviour {
     public AchievementManager achievement_manager;
     public GridManager grid_manager;
 
     public GameObject text_badge_prefab;
+    public GameObject badge_drawer;
 
     protected int max_cells;
     protected int n_rotations;
@@ -305,14 +312,9 @@ public class PolyominoeDatabase : MonoBehaviour {
         SquareNeumann,
         SquareMoore,
         Hexagon,
+        HexagonJump,
         TriangleNeumann,
         TriangleMoore,
-    }
-
-    public enum GridType {
-        Square,
-        Hexagon,
-        Triangle,
     }
 
     GridType grid_type;
@@ -334,6 +336,10 @@ public class PolyominoeDatabase : MonoBehaviour {
           case NeighborhoodType.Hexagon:
             dx = new List<int>{  1, -1,  0,  0,  1, -1};
             dy = new List<int>{  0,  0,  1, -1, -1,  1};
+          break;
+          case NeighborhoodType.HexagonJump:
+            dx = new List<int>{  2, -2,  0,  0,  2, -2, 1,-1,-2,-1, 1, 2};
+            dy = new List<int>{  0,  0,  2, -2, -2,  2, 1, 2, 1,-1,-2,-1};
           break;
           case NeighborhoodType.TriangleNeumann:
             if (cell.x%2 == 0) {  // if x is even, the triangle points up
@@ -386,6 +392,13 @@ public class PolyominoeDatabase : MonoBehaviour {
           break;
           case NeighborhoodType.Hexagon:
             max_cells = 7; // the level finishes after this (333)
+            n_rotations = 6;
+            grid_type = GridType.Hexagon;
+            // 1, 1, 3, 7, 22, 82, 333, 1448, 6572, 30490, 143552, 683101
+            //        brz,slv,gld,plat
+          break;
+          case NeighborhoodType.HexagonJump:
+            max_cells = 5; // the level finishes after this (675)
             n_rotations = 6;
             grid_type = GridType.Hexagon;
             // 1, 1, 3, 7, 22, 82, 333, 1448, 6572, 30490, 143552, 683101
@@ -460,6 +473,29 @@ public class PolyominoeDatabase : MonoBehaviour {
     static public void print_shape(Shape s) {
         foreach ((int x, int y) p in s) {
             Debug.Log($"({p.x}, {p.y})");
+        }
+    }
+
+    public void RenderAllBadges() {
+        for (int size = 1; size <= max_cells; size++) {
+            // TODO show header for this size
+            int badge_count = 0;
+            foreach (var item in polyominoes_all[size]) {
+                if (polyominoes_found[size].ContainsKey(item.Key)) {
+                    Rect bounds = new Rect(
+                            new Vector2(-65, -65), new Vector2(130, 130));
+                    GameObject drawing = grid_manager.draw_shape(
+                            item.Value, bounds, 1);
+                    GameObject badge = achievement_manager.GetBadge(drawing);
+                    badge.transform.SetParent(badge_drawer.transform, false);
+
+                    int badge_x = badge_count % 10;
+                    int badge_y = badge_count / 10;
+                    badge.transform.localPosition += 
+                            new Vector3(badge_x*200, badge_y*200, 0);
+                }
+                badge_count++;
+            }
         }
     }
 
