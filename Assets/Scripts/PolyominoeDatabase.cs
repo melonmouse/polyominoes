@@ -41,6 +41,7 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
     public GameObject text_badge_prefab;
     public GameObject badge_drawer;
     public GameObject badge_drawer_container;
+    public GameObject badge_drawer_cross;
 
     protected int max_cells;
     protected int n_rotations;
@@ -444,9 +445,9 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
             initialize_partitions();
         }
 
-        for (int i = 1; i<= max_cells; i++) {
-            Debug.Log($"{i}: {polyominoes_all[i].Count}");
-        }
+        //for (int i = 1; i<= max_cells; i++) {
+        //    Debug.Log($"{i}: {polyominoes_all[i].Count}");
+        //}
     }
 
     public List<Shape> query(Shape cells) {
@@ -545,6 +546,9 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
             }
 
             float badge_size = 1100/(badges_per_row+0.5f);
+            // apply this to the cross as well
+            badge_drawer_cross.GetComponent<RectTransform>().localScale = 
+                    badge_size/200 * Vector3.one;
 
             int badge_count = 0;
             int max_badge_y = 0;

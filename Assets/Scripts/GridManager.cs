@@ -22,7 +22,8 @@ public class GridManager : MonoBehaviour, IClickableObject {
     public PolyominoeDatabase polyominoe_database;
 
     public Shape selected_cells;
-    int max_cell_count = 3;
+
+    public int max_cell_count = 3;
     GridType grid_type = GridType.Hexagon;
     NeighborhoodType neighborhood_type = NeighborhoodType.SquareNeumann;
 
@@ -73,18 +74,64 @@ public class GridManager : MonoBehaviour, IClickableObject {
         return Vector3.zero;
     }
 
-    public void Update() {
-        if (Input.GetKeyUp(KeyCode.W)) {
-            SceneManager.LoadScene("Menu");
+    public float GetTargetOrthographicSize() {
+        float current_height = Camera.main.orthographicSize * 2;
+        float current_width = Camera.main.aspect * current_height;
+        float min_size = max_cell_count + 2;
+        if (neighborhood_type == NeighborhoodType.TriangleNeumann) {
+            //min_size = (int)Mathf.Ceil(max_cell_count + 2);
+        }
+        if (neighborhood_type == NeighborhoodType.TriangleMoore) {
+            min_size = 2*max_cell_count + 4;
+        }
+        if (neighborhood_type == NeighborhoodType.Hexagon) {
+            //min_size = (int)Mathf.Ceil(1f*max_cell_count+2*1.2f);
+        }
+        if (neighborhood_type == NeighborhoodType.HexagonJump) {
+            min_size = (int)Mathf.Ceil(2*max_cell_count+4f);
         }
 
+        float target_orthographic_size;
+        // we want width >= 
+        // and height >= max_cell_count+2
+        target_orthographic_size =
+                Mathf.Max(1.25f*min_size / 2,  // height fits
+                          min_size / (2 * Camera.main.aspect));  // width fits
+        // width = 8 = aspect*height = aspect * orthographicSize * 2
+        // orthographicSize = 8/(2 * aspect)
+
+        return target_orthographic_size;
+    }
+
+    int counter = 2;
+    public void Update() {
+        if (Input.GetKeyUp(KeyCode.Escape) ||
+            Input.GetKeyUp(KeyCode.Pause) ||
+            Input.GetKeyUp(KeyCode.Backspace)) {
+            SaveAndExit();
+        }
+        if (counter <= 9) {//!!!!!
+            polyominoe_database.AchieveAllShape(counter);
+            counter++;
+        }
+    }
+
+    public void FixedUpdate() {
+        Camera.main.orthographicSize = 0.98f * Camera.main.orthographicSize +
+                                       0.02f * GetTargetOrthographicSize();
     }
 
     public void StoreSaveLevel() {
         SaveLevel sl = new SaveLevel();
         sl.hashes_of_shapes_found = polyominoe_database.GetFoundHashes();
         sl.neighborhood_type = neighborhood_type;
+        sl.max_cells = max_cell_count;
         SaveGame.save_levels[neighborhood_type] = sl;
+    }
+
+    public void SaveAndExit() {
+        StoreSaveLevel();
+        SceneManager.LoadScene("Menu");
     }
 
     public void Start() {
@@ -95,13 +142,9 @@ public class GridManager : MonoBehaviour, IClickableObject {
                     neighborhood_type;
             SaveGame.current_level = neighborhood_type;
         }
-        float height = Camera.main.orthographicSize * 2;
-        float width = Camera.main.aspect * height;
-        if (width >= 8) {
-            // width = 8 = aspect*height = aspect * orthographicSize * 2
-            // orthographicSize = 8/(2 * aspect)
-            Camera.main.orthographicSize = 8 / (2 * Camera.main.aspect);
-        }
+
+        Camera.main.orthographicSize = GetTargetOrthographicSize();
+        
         LoadSaveLevel();
     }
 
@@ -221,7 +264,6 @@ public class GridManager : MonoBehaviour, IClickableObject {
             parent.AddComponent<ObjectLerper>();
             parent.GetComponent<ObjectLerper>().rect_transform_mode = false;
 
-            Debug.Log(center);
             float height = Camera.main.orthographicSize*2;
             float width = height * Camera.main.aspect;
 
@@ -233,6 +275,9 @@ public class GridManager : MonoBehaviour, IClickableObject {
 
         max_cell_count =
                 polyominoe_database.smallest_incomplete_polyominoe_set();
+
+        int cells_left = selected_cells.Count - max_cell_count;
+
 
         if (achieved_shapes.Count > 0) {
             // we have new achievements, so save progress.

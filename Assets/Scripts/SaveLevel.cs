@@ -12,4 +12,5 @@ public class SaveLevel {
 
     public NeighborhoodType neighborhood_type;
     public List<List<long> > hashes_of_shapes_found = new List<List<long> >();
+    public int max_cells = 0;  // keep track for score
 }

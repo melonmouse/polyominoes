@@ -1,6 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 
 public class LevelSelecter : MonoBehaviour {
@@ -8,7 +9,9 @@ public class LevelSelecter : MonoBehaviour {
     public List<GameObject> level_icons;
     public List<NeighborhoodType> neigh_types;
     int current_selection = 0;
-    int max_level = 1;
+    int max_level = 6;//!!!
+    public GameObject next_button;
+    public GameObject prev_button;
 
     public void InitializeEmptySaveGame() {
         foreach (NeighborhoodType nt in neigh_types) {
@@ -31,14 +34,25 @@ public class LevelSelecter : MonoBehaviour {
                 current_selection = i;
             }
         }
+        UpdateNextPrevButtons();
     }
 
     public void SelectNext() {
         current_selection = (int)Mathf.Min(current_selection + 1, max_level);
+        UpdateNextPrevButtons();
     }
 
     public void SelectPrev() {
         current_selection = (int)Mathf.Max(current_selection - 1, 0);
+        UpdateNextPrevButtons();
+    }
+
+    public void UpdateNextPrevButtons() {
+        prev_button.SetActive(current_selection > 0);
+
+        next_button.SetActive(current_selection < level_icons.Count-1);
+        next_button.GetComponent<Button>().interactable =
+                (current_selection < max_level);
     }
 
     public void StartGame() {
@@ -56,13 +70,13 @@ public class LevelSelecter : MonoBehaviour {
     }
 
     void Update() {
-        if (Input.GetKeyUp(KeyCode.A)) {
+        if (Input.GetKeyUp(KeyCode.A) || Input.GetKeyUp(KeyCode.LeftArrow)) {
             SelectPrev();
         }
-        if (Input.GetKeyUp(KeyCode.D)) {
+        if (Input.GetKeyUp(KeyCode.D) || Input.GetKeyUp(KeyCode.RightArrow)) {
             SelectNext();
         }
-        if (Input.GetKeyUp(KeyCode.W)) {
+        if (Input.GetKeyUp(KeyCode.Return) || Input.GetKeyUp(KeyCode.Space)) {
             StartGame();
         }
 
