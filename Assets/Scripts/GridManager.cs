@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
+using UnityEngine.SceneManagement;
 
 using Shape = System.Collections.Generic.SortedSet<(int x, int y)>;
 
@@ -23,13 +24,7 @@ public class GridManager : MonoBehaviour, IClickableObject {
     public Shape selected_cells;
     int max_cell_count = 3;
     GridType grid_type = GridType.Hexagon;
-    
-    public enum GridType {
-        Square,
-        Hexagon,
-        Triangle,
-        // TODO nit deduplicate against version in PolyominoeDatabase
-    }
+    NeighborhoodType neighborhood_type = NeighborhoodType.SquareNeumann;
 
     static float hex_size = 0.6f;
     Vector3 hex_x_base =
@@ -77,38 +72,78 @@ public class GridManager : MonoBehaviour, IClickableObject {
         Debug.Assert(false, "grid_type not set to supported value");
         return Vector3.zero;
     }
-    
+
+    public void Update() {
+        if (Input.GetKeyUp(KeyCode.W)) {
+            SceneManager.LoadScene("Menu");
+        }
+
+    }
+
+    public void StoreSaveLevel() {
+        SaveLevel sl = new SaveLevel();
+        sl.hashes_of_shapes_found = polyominoe_database.GetFoundHashes();
+        sl.neighborhood_type = neighborhood_type;
+        SaveGame.save_levels[neighborhood_type] = sl;
+    }
+
     public void Start() {
+        if (!SaveGame.initialized) {
+            // Should only be possible when debugging!
+            SaveGame.save_levels[neighborhood_type] = new SaveLevel();
+            SaveGame.save_levels[neighborhood_type].neighborhood_type =
+                    neighborhood_type;
+            SaveGame.current_level = neighborhood_type;
+        }
+        float height = Camera.main.orthographicSize * 2;
+        float width = Camera.main.aspect * height;
+        if (width >= 8) {
+            // width = 8 = aspect*height = aspect * orthographicSize * 2
+            // orthographicSize = 8/(2 * aspect)
+            Camera.main.orthographicSize = 8 / (2 * Camera.main.aspect);
+        }
+        LoadSaveLevel();
+    }
+
+    public void LoadSaveLevel() {
+        SaveLevel save_level = SaveGame.save_levels[SaveGame.current_level];
+        neighborhood_type = save_level.neighborhood_type;
+        Debug.Assert(neighborhood_type == SaveGame.current_level);
+        grid_type = PolyominoeDatabase.neighborhood_to_grid[neighborhood_type];
+
+        InitializeGrid();
+
+        polyominoe_database.SetMode(neighborhood_type);
+        polyominoe_database.AddFoundHashes(save_level.hashes_of_shapes_found);
+
+        max_cell_count =
+                polyominoe_database.smallest_incomplete_polyominoe_set();
+
+        selected_cells = new Shape();
+
+    }
+
+    public void InitializeGrid() {
         switch (grid_type) {
           case GridType.Square:
-            polyominoe_database.SetMode(
-                    PolyominoeDatabase.NeighborhoodType.SquareNeumann);
-                    //PolyominoeDatabase.NeighborhoodType.SquareMoore);
             cell_prefab = cell_prefab_square;
             cell_prefab_small = cell_prefab_square_small;
           break;
           case GridType.Hexagon:
-            polyominoe_database.SetMode(
-                    //PolyominoeDatabase.NeighborhoodType.Hexagon);
-                    PolyominoeDatabase.NeighborhoodType.HexagonJump);
             cell_prefab = cell_prefab_hex;
             cell_prefab_small = cell_prefab_hex_small;
           break;
           case GridType.Triangle:
-            polyominoe_database.SetMode(
-                    //PolyominoeDatabase.NeighborhoodType.TriangleNeumann);
-                    PolyominoeDatabase.NeighborhoodType.TriangleMoore);
             cell_prefab = cell_prefab_triangle;
             cell_prefab_small = cell_prefab_triangle_small;
           break;
         }
-        
-        selected_cells = new Shape();
+
         int size = (int)Mathf.Ceil(4*Camera.main.orthographicSize);
         cells = new Dictionary<(int, int),GameObject>();
         for (int i = -size; i<size; i++)
         for (int j = -size; j<size; j++) {
-            // TODO use a shape / draw_cells here
+            // TODO? use a shape / draw_cells here
             cells[(i,j)] = Instantiate(cell_prefab, IndexToWorldCoord(i, j),
                                        Quaternion.identity);
             cells[(i,j)].GetComponent<CellState>().coordinate = (i, j);
@@ -134,7 +169,7 @@ public class GridManager : MonoBehaviour, IClickableObject {
             }
         }
     }
-
+    
     public void RegisterClick() {
         Vector3 world_pos =
                 Camera.main.ScreenToWorldPoint(Input.mousePosition);
@@ -169,7 +204,8 @@ public class GridManager : MonoBehaviour, IClickableObject {
 
         foreach (Shape achieved_shape in achieved_shapes) {
             GameObject parent = new GameObject();
-            Vector2 center = get_bounds(achieved_shape).center;
+            Rect bounds = get_bounds(achieved_shape);
+            Vector2 center = bounds.center;
             parent.transform.position = center;
             foreach ((int x, int y) cell in achieved_shape) {
                 GameObject duplicate = Instantiate(cells[(cell.x, cell.y)]);
@@ -184,16 +220,24 @@ public class GridManager : MonoBehaviour, IClickableObject {
             parent.AddComponent<TRotator>();
             parent.AddComponent<ObjectLerper>();
             parent.GetComponent<ObjectLerper>().rect_transform_mode = false;
-            parent.GetComponent<ObjectLerper>().SetTargetPosition(
-                    new Vector3(center.x + 30, center.y/2, 0));
+
+            Debug.Log(center);
+            float height = Camera.main.orthographicSize*2;
+            float width = height * Camera.main.aspect;
+
+            Vector3 dist = 5*new Vector3(width + bounds.size[0] + 2,
+                                         height*0.6f + bounds.size[1]/2f, 0);
+            parent.GetComponent<ObjectLerper>().SetTargetPosition(dist);
+                    
         }
 
         max_cell_count =
                 polyominoe_database.smallest_incomplete_polyominoe_set();
-    }
 
-
-    public void Update() {
+        if (achieved_shapes.Count > 0) {
+            // we have new achievements, so save progress.
+            StoreSaveLevel();
+        }
     }
 
     // MYBRARY

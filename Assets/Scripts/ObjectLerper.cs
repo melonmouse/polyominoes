@@ -8,6 +8,7 @@ public class ObjectLerper : MonoBehaviour {
 
     RectTransform rect_transform;
     public bool rect_transform_mode = true;
+    public bool destroy_at_destination = false;
 
     void Start() {
         if (rect_transform_mode) {
@@ -32,6 +33,10 @@ public class ObjectLerper : MonoBehaviour {
             rect_transform.anchoredPosition3D += speed;
         } else {
             gameObject.transform.position += speed;
+        }
+
+        if (destroy_at_destination && diff.magnitude < 0.1f) {
+            Destroy(gameObject);
         }
     }
 }

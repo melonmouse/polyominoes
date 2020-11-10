@@ -25,6 +25,15 @@ public enum GridType {
     Triangle,
 }
 
+public enum NeighborhoodType {
+    SquareNeumann,
+    SquareMoore,
+    Hexagon,
+    HexagonJump,
+    TriangleNeumann,
+    TriangleMoore,
+}
+
 public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
     public AchievementManager achievement_manager;
     public GridManager grid_manager;
@@ -41,6 +50,16 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
     bool enable_partitions = false;
     Dictionary<long, Freqs>[] partitions_found;
     Dictionary<long, Freqs>[] partitions_all;
+
+    public static Dictionary<NeighborhoodType, GridType> neighborhood_to_grid =
+            new Dictionary<NeighborhoodType, GridType>{
+                {NeighborhoodType.SquareNeumann, GridType.Square},
+                {NeighborhoodType.SquareMoore, GridType.Square},
+                {NeighborhoodType.Hexagon, GridType.Hexagon},
+                {NeighborhoodType.HexagonJump, GridType.Hexagon},
+                {NeighborhoodType.TriangleNeumann, GridType.Triangle},
+                {NeighborhoodType.TriangleMoore, GridType.Triangle},
+            };
 
     void Start() {
         
@@ -317,15 +336,6 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
         //return configurations.Min;
     }
 
-    public enum NeighborhoodType {
-        SquareNeumann,
-        SquareMoore,
-        Hexagon,
-        HexagonJump,
-        TriangleNeumann,
-        TriangleMoore,
-    }
-
     GridType grid_type;
     NeighborhoodType neighborhood_type;
 
@@ -491,6 +501,29 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
         }
     }
 
+    public void AddFoundHashes(List<List<long> > hashes_of_shapes_found) {
+        for (int size = 1; size < polyominoes_found.Length; size++) {
+            foreach (long hash in hashes_of_shapes_found[size]) {
+                Shape s = polyominoes_all[size][hash];
+                polyominoes_found[size][hash] = s;
+            }
+        }
+    }
+
+    public List<List<long> > GetFoundHashes() {
+        List<List<long> > hashes_of_shapes_found = new List<List<long> >();
+        for (int size = 0; size < polyominoes_found.Length; size++) {
+            hashes_of_shapes_found.Add(new List<long>());
+        }
+        for (int size = 1; size < polyominoes_found.Length; size++) {
+            foreach (long hash in polyominoes_found[size].Keys) {
+                hashes_of_shapes_found[size].Add(hash);
+            }
+        }
+
+        return hashes_of_shapes_found;
+    }
+
     public void RenderAllBadges() {
         float y_offset = 140;
         int max_size = smallest_incomplete_polyominoe_set();
@@ -498,13 +531,26 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
         DestroyAllChildren(badge_drawer);
 
         for (int size = 1; size <= max_size; size++) {
-            // TODO show header for this size
-            int badge_count = 0;
+            // TODO? show header for this size
 
+            int badges_per_row = 4;
+            if (Camera.main.aspect > 2/2f) {
+                badges_per_row = 5;
+            }
+            if (Camera.main.aspect > 3/2f) {
+                badges_per_row = 6;
+            }
+            if (Camera.main.aspect > 4/2f) {
+                badges_per_row = 7;
+            }
+
+            float badge_size = 1100/(badges_per_row+0.5f);
+
+            int badge_count = 0;
             int max_badge_y = 0;
             foreach (var item in polyominoes_all[size]) {
-                int badge_x = badge_count % 4;
-                int badge_y = badge_count / 4;
+                int badge_x = badge_count % badges_per_row;
+                int badge_y = badge_count / badges_per_row;
                 GameObject badge_content;
                 if (polyominoes_found[size].ContainsKey(item.Key)) {
                     Rect bounds = new Rect(
@@ -523,11 +569,13 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
                 rt.anchorMax = new Vector2(0, 1);
                 rt.anchorMin = new Vector2(0, 1);
                 rt.anchoredPosition3D = new Vector3(
-                        (badge_x+0.5f)*200, -badge_y*200 - y_offset, 0);
+                        (badge_x+0.75f)*badge_size,
+                        -badge_y*badge_size - y_offset, 0);
+                rt.localScale = badge_size/200 * Vector3.one;
                 badge_count++;
                 max_badge_y = badge_y;
             }
-            y_offset += (max_badge_y+1.2f)*200;
+            y_offset += (max_badge_y+1.2f)*badge_size;
         }
         badge_drawer.GetComponent<RectTransform>().sizeDelta =
                 new Vector2(0, y_offset + 100);
