@@ -9,9 +9,10 @@ public class LevelSelecter : MonoBehaviour {
     public List<GameObject> level_icons;
     public List<NeighborhoodType> neigh_types;
     int current_selection = 0;
-    int max_level = 6;//!!!
+    int max_level = 0;
     public GameObject next_button;
     public GameObject prev_button;
+    public GameObject click_to_start;
 
     public void InitializeEmptySaveGame() {
         foreach (NeighborhoodType nt in neigh_types) {
@@ -34,6 +35,72 @@ public class LevelSelecter : MonoBehaviour {
                 current_selection = i;
             }
         }
+
+        // add satelites representing score
+        int total_score = 0;
+        for (int i = 0; i < level_icons.Count; i++) {
+            int score = SaveGame.save_levels[neigh_types[i]].max_cells;
+            level_icons[i].GetComponent<Satellite>().n_satelites = score;
+            total_score += score;
+            if (score > 1) {
+                level_icons[i].GetComponent<Satellite>().initialize();
+            }
+        }
+        Debug.Log($"total_score={total_score}");
+        // unlock levels based on score
+        if (total_score < 4) {
+            max_level = 0;
+            // For TriangleNeumann - finish tutorial;
+            // - SquareNeumann 4 (5 options)
+        } else if (total_score < 10) {
+            max_level = 1;  // unlock TriangleNeumann
+            // For Hexagon - finish 10=4+5(+1):
+            // - SquareNeumann 4 (5 options)
+            // - TriangleNeumann 5 (4 options)
+            // and one of:
+            // - SquareNeumann 5=+1 (12 options)
+            // - TriangleNeumann 6=+1 (12 options)
+        } else if (total_score < 16) {
+            max_level = 2;  // unlock Hexagon
+            // For SquareMoore - finish 16=5+6+4(+1):
+            // - SquareNeumann 5 (12 options)
+            // - TriangleNeumann 6 (12 options)
+            // - Hexagon 4 (7 options)
+            // and one of:
+            // - SquareNeumann 6=+1 (35 options)
+            // - TriangleNeumann 7=+1 (24 options)
+            // - Hexagon 5=+1 (22 options)
+        } else if (total_score < 21) {  // 
+            max_level = 3;  // unlock SquareMoore
+            // For TriangleMoore - finish 21=5+6+4+3(+3):
+            // - SquareNeumann 5 (12 options)
+            // - TriangleNeumann 6 (12 options)
+            // - Hexagon 4 (7 options)
+            // - SquareMoore 3 (5 options)
+            // and three of (two extra compared to last):
+            // - SquareNeumann 6=+1 (35 options)
+            // - TriangleNeumann 7=+1 (24 options)
+            // - Hexagon 5=+1 (22 options)
+            // - SquareMoore 4=+1 (22 options)
+        } else if (total_score < 26) {  // 
+            max_level = 4;  // unlock TriangleMoore
+            // For TriangleMoore - finish 26=5+6+4+3+3(+5):
+            // - SquareNeumann 5 (12 options)
+            // - TriangleNeumann 6 (12 options)
+            // - Hexagon 4 (7 options)
+            // - SquareMoore 3 (5 options)
+            // - TriangleMoore 3 (11 options)
+            // and all of (two extra compared to last):
+            // - SquareNeumann 6=+1 (35 options)
+            // - TriangleNeumann 7=+1 (24 options)
+            // - Hexagon 5=+1 (22 options)
+            // - SquareMoore 4=+1 (22 options)
+            // - TriangleMoore 4=+1 (75 options)
+        } else {
+            max_level = 5;  // unlock HexagonJump
+        }
+
+        Debug.Log($"max_level={max_level}");
         UpdateNextPrevButtons();
     }
 
@@ -49,10 +116,14 @@ public class LevelSelecter : MonoBehaviour {
 
     public void UpdateNextPrevButtons() {
         prev_button.SetActive(current_selection > 0);
-
-        next_button.SetActive(current_selection < level_icons.Count-1);
-        next_button.GetComponent<Button>().interactable =
-                (current_selection < max_level);
+        if (max_level == 0) {
+            next_button.SetActive(false);
+            // Don't show the next button at first to avoid confusion
+        } else {
+            next_button.SetActive(current_selection < level_icons.Count-1);
+            next_button.GetComponent<Button>().interactable =
+                    (current_selection < max_level);
+        }
     }
 
     public void StartGame() {
@@ -78,6 +149,10 @@ public class LevelSelecter : MonoBehaviour {
         }
         if (Input.GetKeyUp(KeyCode.Return) || Input.GetKeyUp(KeyCode.Space)) {
             StartGame();
+        }
+
+        if (max_level == 0 && Time.time > 6f) {
+            click_to_start.SetActive(true);
         }
 
         for (int i = 0; i < level_icons.Count; i++) {

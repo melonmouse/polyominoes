@@ -74,14 +74,33 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
         }
     }
 
+    public int get_num_shapes_found(int size) {
+        return polyominoes_found[size].Count;
+    }
+
+    public int get_num_shapes_exist(int size) {
+        return polyominoes_all[size].Count;
+    }
+
+    public int biggest_complete_polyominoe_set() {
+        //return max_cells; // !!!!
+        int result = -1;
+        for (int i = 1; i <= max_cells; i++) {
+            if (polyominoes_all[i].Count == polyominoes_found[i].Count) {
+                result = i;
+            }
+        }
+        return result;
+    }
+
     public int smallest_incomplete_polyominoe_set() {
-        // skip 1 and 2
+        // not counting set 1 and 2 which may be incomplete
         for (int i = 3; i <= max_cells; i++) {
-            if (polyominoes_all[i].Count != polyominoes_found[i].Count) {
+            if (polyominoes_all[i].Count > polyominoes_found[i].Count) {
                 return i;
             }
         }
-        return max_cells+1; // player finished the game
+        return max_cells;
     }
 
     public long ShapeHash(Shape s) {
@@ -117,11 +136,24 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
             polyominoes_found[n_squares] = new Dictionary<long, Shape>();
             polyominoes_all[n_squares] = new Dictionary<long, Shape>();
         }
+
         Shape trivial = new Shape();
         trivial.Add((0, 0));
         trivial = get_canonical(trivial);
         polyominoes_all[1][ShapeHash(trivial)] = trivial;
-        polyominoes_found[1][ShapeHash(trivial)] = trivial;
+
+        if (neighborhood_type == NeighborhoodType.SquareNeumann) {
+            // first level - skip 1 and 2 blocks
+            polyominoes_found[1][ShapeHash(trivial)] = trivial;
+
+            Shape easy = new Shape();
+            easy.Add((0, 0));
+            easy.Add((1, 0));
+            easy = get_canonical(easy);
+            polyominoes_all[2][ShapeHash(easy)] = easy;
+            polyominoes_found[2][ShapeHash(easy)] = easy;
+        }
+
         for (int n_squares = 2; n_squares <= max_cells; n_squares++) {
             foreach (Shape small_shape in polyominoes_all[n_squares-1].Values) {
                 foreach ((int x, int y) cell in small_shape) {
@@ -418,18 +450,18 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
             //        brz,slv,gld,plat
           break;
           case NeighborhoodType.HexagonJump:
-            max_cells = 5; // the level finishes after this (675)
+            max_cells = 6; // the level finishes after this (675)
             n_rotations = 6;
             grid_type = GridType.Hexagon;
-            // 1, 1, 1, 2, 9, 70, 675, 7863, 94721  (NOT ON OEIS)
-            //        brz,slv,gld,plat
+            // 1, 1, 2, 9, 70, 675, 7863, 94721  (NOT ON OEIS)
+            //     brz,slv,gld,plat
           break;
           case NeighborhoodType.TriangleNeumann:
-            max_cells = 9; // the level finishes after this (448)
+            max_cells = 10; // the level finishes after this (448)
             n_rotations = 6;
             grid_type = GridType.Triangle;
-            // 1, 1, 3, 4, 12, 24, 66, 160, 448, 1186, 3334, 9235, 26166, 73983
-            //            brz,slv, gld,    plat
+            // 1, 1, 1, 3, 4, 12, 24, 66, 160, 448, 1186, 3334, 9235, 26166, 73983
+            //               brz,slv, gld,    plat
           break;
           case NeighborhoodType.TriangleMoore:
             max_cells = 5; // the level finishes after this (528)

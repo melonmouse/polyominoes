@@ -10,6 +10,8 @@ public class GridManager : MonoBehaviour, IClickableObject {
     GameObject cell_prefab;
     GameObject cell_prefab_small;
 
+    public GameObject menu_button;
+
     public GameObject cell_prefab_square;
     public GameObject cell_prefab_square_small;
     public GameObject cell_prefab_hex;
@@ -20,12 +22,21 @@ public class GridManager : MonoBehaviour, IClickableObject {
 
     public Dictionary<(int, int),GameObject> cells;
     public PolyominoeDatabase polyominoe_database;
-
     public Shape selected_cells;
 
     public int max_cell_count = 3;
+    public DiscreteValueIndicator cell_count_indicator;
+    public GameObject tutorial_three;
+    public GameObject tutorial_can_you_make_size_four;
+    public GameObject tutorial_see_shapes;
+    public GameObject make_sure_to_deselect;
+    public GameObject tutorial_done_text;
+    bool tutorial_done = false;
+
     GridType grid_type = GridType.Hexagon;
     NeighborhoodType neighborhood_type = NeighborhoodType.SquareNeumann;
+
+    bool initialized_camera_size = false;
 
     static float hex_size = 0.6f;
     Vector3 hex_x_base =
@@ -103,20 +114,73 @@ public class GridManager : MonoBehaviour, IClickableObject {
         return target_orthographic_size;
     }
 
-    int counter = 2;
+    int invalid_click_count = 0;
+    float tutorial_done_message_start_time = -1f;
+    float tutorial_see_shapes_start_time = -1f;
+    float tutorial_size_four_start_time = -1f;
+
     public void Update() {
         if (Input.GetKeyUp(KeyCode.Escape) ||
             Input.GetKeyUp(KeyCode.Pause) ||
             Input.GetKeyUp(KeyCode.Backspace)) {
             SaveAndExit();
         }
-        if (counter <= 9) {//!!!!!
-            polyominoe_database.AchieveAllShape(counter);
-            counter++;
+
+        if (neighborhood_type == NeighborhoodType.SquareNeumann &&
+            !tutorial_done) {
+            if (max_cell_count == 3) {
+                make_sure_to_deselect.SetActive(invalid_click_count >= 1);
+            }
+            if (max_cell_count == 4) {
+                make_sure_to_deselect.SetActive(invalid_click_count >= 2);
+
+                // TODO (not here?) add counter showing how many
+                // shapes you collected/have to go
+                if (polyominoe_database.get_num_shapes_found(size: 4) >= 3) {
+                    if (tutorial_see_shapes_start_time < 0) {
+                        tutorial_see_shapes_start_time = Time.time + 4f;
+                    }
+                    tutorial_see_shapes.SetActive(
+                            Time.time < tutorial_see_shapes_start_time);
+
+                    // stop showing the make-all-size-4-shapes message
+                    tutorial_size_four_start_time = 0.1f;
+                }
+
+                if (tutorial_size_four_start_time < 0) {
+                    tutorial_size_four_start_time = Time.time + 4f;
+                }
+                tutorial_can_you_make_size_four.SetActive(
+                            Time.time < tutorial_size_four_start_time);
+            }
+            if (max_cell_count == 5) {
+                // show message for 7 seconds
+                if (tutorial_done_message_start_time < 0) {
+                    tutorial_done_message_start_time = Time.time + 7f;
+                }
+                if (Time.time < tutorial_done_message_start_time) {
+                    tutorial_done_text.SetActive(true);
+                    invalid_click_count = 0;
+                    // avoid overlap with deselect message
+                } else {
+                    tutorial_done_text.SetActive(false);
+                }
+                        
+            }
+            menu_button.SetActive(max_cell_count > 4);
+            tutorial_three.SetActive(max_cell_count < 4);
+            // only allow going back to the menu after completing tutorial
         }
+
+        cell_count_indicator.max_value = max_cell_count;
+        cell_count_indicator.value = selected_cells.Count;
     }
 
     public void FixedUpdate() {
+        if (!initialized_camera_size) {
+            Camera.main.orthographicSize = GetTargetOrthographicSize();
+            initialized_camera_size = true;
+        }
         Camera.main.orthographicSize = 0.98f * Camera.main.orthographicSize +
                                        0.02f * GetTargetOrthographicSize();
     }
@@ -125,7 +189,8 @@ public class GridManager : MonoBehaviour, IClickableObject {
         SaveLevel sl = new SaveLevel();
         sl.hashes_of_shapes_found = polyominoe_database.GetFoundHashes();
         sl.neighborhood_type = neighborhood_type;
-        sl.max_cells = max_cell_count;
+        sl.max_cells = polyominoe_database.biggest_complete_polyominoe_set();
+        Debug.Log(sl.max_cells);
         SaveGame.save_levels[neighborhood_type] = sl;
     }
 
@@ -146,6 +211,10 @@ public class GridManager : MonoBehaviour, IClickableObject {
         Camera.main.orthographicSize = GetTargetOrthographicSize();
         
         LoadSaveLevel();
+
+        tutorial_done = neighborhood_type == NeighborhoodType.SquareNeumann &&
+                        max_cell_count >= 5;
+        // avoid showing tutorial again when returning
     }
 
     public void LoadSaveLevel() {
@@ -160,7 +229,8 @@ public class GridManager : MonoBehaviour, IClickableObject {
         polyominoe_database.AddFoundHashes(save_level.hashes_of_shapes_found);
 
         max_cell_count =
-                polyominoe_database.smallest_incomplete_polyominoe_set();
+                polyominoe_database.biggest_complete_polyominoe_set()+1;
+        max_cell_count = (int)Mathf.Max(3, max_cell_count);
 
         selected_cells = new Shape();
 
@@ -182,7 +252,7 @@ public class GridManager : MonoBehaviour, IClickableObject {
           break;
         }
 
-        int size = (int)Mathf.Ceil(4*Camera.main.orthographicSize);
+        int size = 30; // should be sufficient for all levels and aspect ratios
         cells = new Dictionary<(int, int),GameObject>();
         for (int i = -size; i<size; i++)
         for (int j = -size; j<size; j++) {
@@ -235,6 +305,8 @@ public class GridManager : MonoBehaviour, IClickableObject {
             toggled_cell.set_selected(false);
             selected_cells.Remove(cell_index);
             achieved_shapes = polyominoe_database.query(selected_cells);
+
+            invalid_click_count = 0;  // used for the tutorial
         } else {
             if (selected_cells.Count < max_cell_count) {
                 toggled_cell.set_selected(true);
@@ -242,6 +314,11 @@ public class GridManager : MonoBehaviour, IClickableObject {
                 achieved_shapes = polyominoe_database.query(selected_cells);
             } else {
                 // TODO show something to show selection failed.
+                Camera.main.gameObject.GetComponent<RandomShake>()
+                      .StartShake(duration: 0.5f, amplitude: 0.05f);
+                cell_count_indicator.BoostVisibility();
+
+                invalid_click_count++;  // used for the tutorial
             }
         }
 
@@ -270,11 +347,11 @@ public class GridManager : MonoBehaviour, IClickableObject {
             Vector3 dist = 5*new Vector3(width + bounds.size[0] + 2,
                                          height*0.6f + bounds.size[1]/2f, 0);
             parent.GetComponent<ObjectLerper>().SetTargetPosition(dist);
-                    
         }
 
         max_cell_count =
-                polyominoe_database.smallest_incomplete_polyominoe_set();
+                polyominoe_database.biggest_complete_polyominoe_set() + 1;
+        max_cell_count = (int)Mathf.Max(3, max_cell_count);
 
         int cells_left = selected_cells.Count - max_cell_count;
 
