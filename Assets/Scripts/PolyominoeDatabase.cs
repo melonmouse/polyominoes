@@ -140,12 +140,12 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
         Shape trivial = new Shape();
         trivial.Add((0, 0));
         trivial = get_canonical(trivial);
+        // always skip the trivial badge
         polyominoes_all[1][ShapeHash(trivial)] = trivial;
+        polyominoes_found[1][ShapeHash(trivial)] = trivial;
 
         if (neighborhood_type == NeighborhoodType.SquareNeumann) {
-            // first level - skip 1 and 2 blocks
-            polyominoes_found[1][ShapeHash(trivial)] = trivial;
-
+            // first level - skip size 2 badge
             Shape easy = new Shape();
             easy.Add((0, 0));
             easy.Add((1, 0));
@@ -445,7 +445,7 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
           case NeighborhoodType.Hexagon:
             max_cells = 7; // the level finishes after this (333)
             n_rotations = 6;
-            grid_type = GridType.Hexagon;
+            grid_type = GridType.Hexagon; // still fast enough at 6 hexes = 82 (cumi 116)
             // 1, 1, 3, 7, 22, 82, 333, 1448, 6572, 30490, 143552, 683101
             //        brz,slv,gld,plat
           break;
@@ -459,7 +459,7 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
           case NeighborhoodType.TriangleNeumann:
             max_cells = 10; // the level finishes after this (448)
             n_rotations = 6;
-            grid_type = GridType.Triangle;
+            grid_type = GridType.Triangle; // got too slow at 8 triangles = 66 (cumi 112) VERIFY
             // 1, 1, 1, 3, 4, 12, 24, 66, 160, 448, 1186, 3334, 9235, 26166, 73983
             //               brz,slv, gld,    plat
           break;

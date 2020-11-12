@@ -70,19 +70,19 @@ public class LevelSelecter : MonoBehaviour {
             // - SquareNeumann 6=+1 (35 options)
             // - TriangleNeumann 7=+1 (24 options)
             // - Hexagon 5=+1 (22 options)
-        } else if (total_score < 21) {  // 
+        } else if (total_score < 20) {  // 
             max_level = 3;  // unlock SquareMoore
             // For TriangleMoore - finish 21=5+6+4+3(+3):
             // - SquareNeumann 5 (12 options)
             // - TriangleNeumann 6 (12 options)
             // - Hexagon 4 (7 options)
             // - SquareMoore 3 (5 options)
-            // and three of (two extra compared to last):
+            // and two of (one extra compared to last):
             // - SquareNeumann 6=+1 (35 options)
             // - TriangleNeumann 7=+1 (24 options)
             // - Hexagon 5=+1 (22 options)
             // - SquareMoore 4=+1 (22 options)
-        } else if (total_score < 26) {  // 
+        } else if (total_score < 25) {  // 
             max_level = 4;  // unlock TriangleMoore
             // For TriangleMoore - finish 26=5+6+4+3+3(+5):
             // - SquareNeumann 5 (12 options)
@@ -90,7 +90,7 @@ public class LevelSelecter : MonoBehaviour {
             // - Hexagon 4 (7 options)
             // - SquareMoore 3 (5 options)
             // - TriangleMoore 3 (11 options)
-            // and all of (two extra compared to last):
+            // and four out of (two extra compared to last):
             // - SquareNeumann 6=+1 (35 options)
             // - TriangleNeumann 7=+1 (24 options)
             // - Hexagon 5=+1 (22 options)

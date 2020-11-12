@@ -148,7 +148,9 @@ public class GridManager : MonoBehaviour, IClickableObject {
                 }
 
                 if (tutorial_size_four_start_time < 0) {
-                    tutorial_size_four_start_time = Time.time + 4f;
+                    tutorial_size_four_start_time = Time.time + 10f;
+                    // 10 seconds is long, but it will be hidden once three
+                    // shapes are created
                 }
                 tutorial_can_you_make_size_four.SetActive(
                             Time.time < tutorial_size_four_start_time);
