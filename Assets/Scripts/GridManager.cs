@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using TMPro;
 
 using Shape = System.Collections.Generic.SortedSet<(int x, int y)>;
 
@@ -26,11 +27,13 @@ public class GridManager : MonoBehaviour, IClickableObject {
 
     public int max_cell_count = 3;
     public DiscreteValueIndicator cell_count_indicator;
+    public TMP_Text shape_progress_counter;
     public GameObject tutorial_three;
     public GameObject tutorial_can_you_make_size_four;
     public GameObject tutorial_see_shapes;
     public GameObject make_sure_to_deselect;
     public GameObject tutorial_done_text;
+    public GameObject level_unlocked_message;
     bool tutorial_done = false;
 
     GridType grid_type = GridType.Hexagon;
@@ -119,6 +122,7 @@ public class GridManager : MonoBehaviour, IClickableObject {
     float tutorial_done_message_start_time = -1f;
     float tutorial_see_shapes_start_time = -1f;
     float tutorial_size_four_start_time = -1f;
+    float level_unlocked_timer = -1f;
 
     public void Update() {
         if (Input.GetKeyUp(KeyCode.X)) {
@@ -131,8 +135,7 @@ public class GridManager : MonoBehaviour, IClickableObject {
             SaveAndExit();
         }
 
-        if (neighborhood_type == NeighborhoodType.SquareNeumann &&
-            !tutorial_done) {
+        if (!tutorial_done) {
             if (max_cell_count == 3) {
                 make_sure_to_deselect.SetActive(invalid_click_count >= 1);
             }
@@ -179,6 +182,10 @@ public class GridManager : MonoBehaviour, IClickableObject {
             // only allow going back to the menu after completing tutorial
         }
 
+        level_unlocked_message.SetActive(tutorial_done &&
+                                         level_unlocked_timer >= 0 &&
+                                         Time.time < level_unlocked_timer);
+        
         cell_count_indicator.max_value = max_cell_count;
         cell_count_indicator.value = selected_cells.Count;
     }
@@ -197,8 +204,8 @@ public class GridManager : MonoBehaviour, IClickableObject {
         sl.hashes_of_shapes_found = polyominoe_database.GetFoundHashes();
         sl.neighborhood_type = neighborhood_type;
         sl.max_cells = polyominoe_database.biggest_complete_polyominoe_set();
-        Debug.Log(sl.max_cells);
-        SaveGame.save_levels[neighborhood_type] = sl;
+        CurrentSaveGame.save.save_levels[neighborhood_type] = sl;
+        SaveGame.SaveToFile(CurrentSaveGame.save);
     }
 
     public void SaveAndExit() {
@@ -207,27 +214,30 @@ public class GridManager : MonoBehaviour, IClickableObject {
     }
 
     public void Start() {
-        if (!SaveGame.initialized) {
+        if (!CurrentSaveGame.save.initialized) {
             // Should only be possible when debugging!
-            SaveGame.save_levels[neighborhood_type] = new SaveLevel();
-            SaveGame.save_levels[neighborhood_type].neighborhood_type =
+            CurrentSaveGame.save.save_levels[neighborhood_type] = new SaveLevel();
+            CurrentSaveGame.save.save_levels[neighborhood_type].neighborhood_type =
                     neighborhood_type;
-            SaveGame.current_level = neighborhood_type;
+            CurrentSaveGame.save.current_level = neighborhood_type;
         }
 
         Camera.main.orthographicSize = GetTargetOrthographicSize();
         
         LoadSaveLevel();
 
-        tutorial_done = neighborhood_type == NeighborhoodType.SquareNeumann &&
+        UpdateShapesFoundCounter();
+
+        // avoid showing tutorial again when returning to SquareNeumann,
+        // and don't show it in other levels at all
+        tutorial_done = neighborhood_type != NeighborhoodType.SquareNeumann ||
                         max_cell_count >= 5;
-        // avoid showing tutorial again when returning
     }
 
     public void LoadSaveLevel() {
-        SaveLevel save_level = SaveGame.save_levels[SaveGame.current_level];
+        SaveLevel save_level = CurrentSaveGame.save.save_levels[CurrentSaveGame.save.current_level];
         neighborhood_type = save_level.neighborhood_type;
-        Debug.Assert(neighborhood_type == SaveGame.current_level);
+        Debug.Assert(neighborhood_type == CurrentSaveGame.save.current_level);
         grid_type = PolyominoeDatabase.neighborhood_to_grid[neighborhood_type];
 
         InitializeGrid();
@@ -235,12 +245,20 @@ public class GridManager : MonoBehaviour, IClickableObject {
         polyominoe_database.SetMode(neighborhood_type);
         polyominoe_database.AddFoundHashes(save_level.hashes_of_shapes_found);
 
-        max_cell_count =
-                polyominoe_database.biggest_complete_polyominoe_set()+1;
-        max_cell_count = (int)Mathf.Max(3, max_cell_count);
+        SetMaxCellCount();
 
         selected_cells = new Shape();
 
+    }
+
+    public void SetMaxCellCount() {
+        max_cell_count =
+                polyominoe_database.biggest_complete_polyominoe_set() + 1;
+        max_cell_count = (int)Mathf.Max(3, max_cell_count);
+
+        if (max_cell_count > polyominoe_database.GetMaxCells()) {
+            max_cell_count = polyominoe_database.GetMaxCells();
+        }
     }
 
     public void InitializeGrid() {
@@ -291,6 +309,9 @@ public class GridManager : MonoBehaviour, IClickableObject {
     }
     
     public void RegisterClick() {
+        int prior_total_score = LevelBariers.get_total_score();
+        // store score before processing click, so we can see if it increased
+
         Vector3 world_pos =
                 Camera.main.ScreenToWorldPoint(Input.mousePosition);
 
@@ -301,6 +322,7 @@ public class GridManager : MonoBehaviour, IClickableObject {
         }
         (int x, int y) cell_index = hit.collider.transform.parent.gameObject
                                        .GetComponent<CellState>().coordinate;
+
 
         // // The following works, but rounding can be off.
         //(int x, int y) cell_index = WorldCoordToIndex(world_pos);
@@ -320,7 +342,6 @@ public class GridManager : MonoBehaviour, IClickableObject {
                 selected_cells.Add(cell_index);
                 achieved_shapes = polyominoe_database.query(selected_cells);
             } else {
-                // TODO show something to show selection failed.
                 Camera.main.gameObject.GetComponent<RandomShake>()
                       .StartShake(duration: 0.5f, amplitude: 0.05f);
                 cell_count_indicator.BoostVisibility();
@@ -356,16 +377,43 @@ public class GridManager : MonoBehaviour, IClickableObject {
             parent.GetComponent<ObjectLerper>().SetTargetPosition(dist);
         }
 
-        max_cell_count =
-                polyominoe_database.biggest_complete_polyominoe_set() + 1;
-        max_cell_count = (int)Mathf.Max(3, max_cell_count);
-
+        SetMaxCellCount();
         int cells_left = selected_cells.Count - max_cell_count;
-
 
         if (achieved_shapes.Count > 0) {
             // we have new achievements, so save progress.
             StoreSaveLevel();
+            UpdateShapesFoundCounter();
+
+            int total_score = LevelBariers.get_total_score();
+            if (total_score > prior_total_score) {
+                // we just had a score increase
+                if (LevelBariers.get_max_level(total_score) >
+                    LevelBariers.get_max_level(total_score-1) ) {
+                    // score increase caused unlock of new level!
+                    level_unlocked_timer = Time.time + 7f;
+                }
+            }
+        }
+    }
+
+    public void UpdateShapesFoundCounter() {
+        // If level is maxed out, replace the counter
+        Debug.Log($"max_cell_count={max_cell_count}");
+        Debug.Log($"database_max={polyominoe_database.GetMaxCells()}");
+        if (max_cell_count == polyominoe_database.GetMaxCells()) {
+            shape_progress_counter.text = "DONE!";
+            return;
+        }
+
+        int shapes_found =
+                polyominoe_database.get_num_shapes_found(max_cell_count);
+        int shapes_exist =
+                polyominoe_database.get_num_shapes_exist(max_cell_count);
+        if (shapes_exist >= 10) {
+            shape_progress_counter.text = $"{shapes_found} / {shapes_exist}";
+        } else {
+            shape_progress_counter.text = "";
         }
     }
 

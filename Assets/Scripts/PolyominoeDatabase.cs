@@ -66,6 +66,10 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
         
     }
 
+    public int GetMaxCells() {
+        return max_cells;
+    }
+
     public void RegisterClick() {
         bool was_active = badge_drawer_container.activeSelf;
         badge_drawer_container.SetActive(!was_active);
@@ -524,7 +528,13 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
 
     public void cheat_to_next_level() {
         int size = smallest_incomplete_polyominoe_set();
+        bool skip_first = true;
         foreach (Shape s in polyominoes_all[size].Values) {
+            if (skip_first) {
+                skip_first = false;
+                continue;
+                // skip one shape
+            }
             query(s);
         }
     }
