@@ -445,7 +445,7 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
           case NeighborhoodType.Hexagon:
             max_cells = 7; // the level finishes after this (333)
             n_rotations = 6;
-            grid_type = GridType.Hexagon; // still fast enough at 6 hexes = 82 (cumi 116)
+            grid_type = GridType.Hexagon;
             // 1, 1, 3, 7, 22, 82, 333, 1448, 6572, 30490, 143552, 683101
             //        brz,slv,gld,plat
           break;
@@ -459,7 +459,7 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
           case NeighborhoodType.TriangleNeumann:
             max_cells = 10; // the level finishes after this (448)
             n_rotations = 6;
-            grid_type = GridType.Triangle; // got too slow at 8 triangles = 66 (cumi 112) VERIFY
+            grid_type = GridType.Triangle;
             // 1, 1, 1, 3, 4, 12, 24, 66, 160, 448, 1186, 3334, 9235, 26166, 73983
             //               brz,slv, gld,    plat
           break;
@@ -520,6 +520,13 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
             query_freqs(component_sizes);
         }
         return result;
+    }
+
+    public void cheat_to_next_level() {
+        int size = smallest_incomplete_polyominoe_set();
+        foreach (Shape s in polyominoes_all[size].Values) {
+            query(s);
+        }
     }
 
     static public void print_shape(Shape s) {

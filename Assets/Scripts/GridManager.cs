@@ -34,7 +34,8 @@ public class GridManager : MonoBehaviour, IClickableObject {
     bool tutorial_done = false;
 
     GridType grid_type = GridType.Hexagon;
-    NeighborhoodType neighborhood_type = NeighborhoodType.SquareNeumann;
+    //NeighborhoodType neighborhood_type = NeighborhoodType.SquareNeumann;
+    NeighborhoodType neighborhood_type = NeighborhoodType.TriangleNeumann;
 
     bool initialized_camera_size = false;
 
@@ -120,6 +121,10 @@ public class GridManager : MonoBehaviour, IClickableObject {
     float tutorial_size_four_start_time = -1f;
 
     public void Update() {
+        if (Input.GetKeyUp(KeyCode.X)) {
+            polyominoe_database.cheat_to_next_level();
+        }
+
         if (Input.GetKeyUp(KeyCode.Escape) ||
             Input.GetKeyUp(KeyCode.Pause) ||
             Input.GetKeyUp(KeyCode.Backspace)) {

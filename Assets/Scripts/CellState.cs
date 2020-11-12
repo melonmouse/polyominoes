@@ -41,6 +41,7 @@ public class CellState : MonoBehaviour {
     }
 
     public void set_text(string s) {
+        debug_text.enabled = true;
         debug_text.text = s;
         debug_text.gameObject.transform.rotation = Quaternion.identity;
     }
@@ -48,6 +49,7 @@ public class CellState : MonoBehaviour {
     void Start() {
         selected = false;
         image_mode = false;
+        debug_text.enabled = false;
     }
 
     public void set_order_in_layer(int order) {
