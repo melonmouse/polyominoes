@@ -42,7 +42,7 @@ public class LevelSelecter : MonoBehaviour {
 
         // add satelites representing score
         for (int i = 0; i < level_icons.Count; i++) {
-            int score = CurrentSaveGame.save.save_levels[neigh_types[i]].max_cells;
+            int score = CurrentSaveGame.save.save_levels[neigh_types[i]].score;
             level_icons[i].GetComponent<Satellite>().n_satelites = score;
             if (score > 1) {
                 level_icons[i].GetComponent<Satellite>().initialize();

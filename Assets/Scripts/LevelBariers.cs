@@ -5,7 +5,7 @@ static class LevelBariers {
     public static int get_total_score() {
         int total_score = 0;
         foreach (SaveLevel sl in CurrentSaveGame.save.save_levels.Values) {
-            total_score += sl.max_cells;
+            total_score += sl.score;
         }
         return total_score;
     }

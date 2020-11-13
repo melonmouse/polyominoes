@@ -204,6 +204,7 @@ public class GridManager : MonoBehaviour, IClickableObject {
         sl.hashes_of_shapes_found = polyominoe_database.GetFoundHashes();
         sl.neighborhood_type = neighborhood_type;
         sl.max_cells = polyominoe_database.biggest_complete_polyominoe_set();
+        sl.score = (int)Mathf.Max(sl.max_cells, sl.score);
         CurrentSaveGame.save.save_levels[neighborhood_type] = sl;
         SaveGame.SaveToFile(CurrentSaveGame.save);
     }
