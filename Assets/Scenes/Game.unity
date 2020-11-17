@@ -463,6 +463,7 @@ MonoBehaviour:
   cell_prefab_hex: {fileID: 3521593935042600244, guid: 576b2081d58d91a9387f0f26f5dc3065, type: 3}
   cell_prefab_hex_small: {fileID: 7767700767805285300, guid: 70f8b4187d518dc1d855060c2b47a444, type: 3}
   cell_prefab_triangle: {fileID: 2350803292633166, guid: a065998c4834dc439b87b8fa74ed280a, type: 3}
+  cell_prefab_triangle_flipped: {fileID: 2700905667482595360, guid: 1b8e6cc3d3efd7bab9b114a90af9a938, type: 3}
   cell_prefab_triangle_small: {fileID: 110635324322012478, guid: ba12f1927d14eda52a9aafc329e0ea1f, type: 3}
   cell_prefab_triangle_small_flipped: {fileID: 5344951065288949148, guid: 082d65085e8ec2abcb1435b273870b9c, type: 3}
   polyominoe_database: {fileID: 13178712}
@@ -5022,7 +5023,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   selected_obj: {fileID: 0}
   deselected_obj: {fileID: 0}
-  debug_text: {fileID: 601888823558235548}
 --- !u!1 &9051894702781217487
 GameObject:
   m_ObjectHideFlags: 0

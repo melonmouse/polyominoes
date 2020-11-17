@@ -18,6 +18,7 @@ public class GridManager : MonoBehaviour, IClickableObject {
     public GameObject cell_prefab_hex;
     public GameObject cell_prefab_hex_small;
     public GameObject cell_prefab_triangle;
+    public GameObject cell_prefab_triangle_flipped;
     public GameObject cell_prefab_triangle_small;
     public GameObject cell_prefab_triangle_small_flipped;
 
@@ -304,8 +305,14 @@ public class GridManager : MonoBehaviour, IClickableObject {
         for (int i = -size; i<size; i++)
         for (int j = -size; j<size; j++) {
             // TODO? use a shape / draw_cells here
-            cells[(i,j)] = Instantiate(cell_prefab, IndexToWorldCoord(i, j),
-                                       Quaternion.identity);
+            if (grid_type == GridType.Triangle && (i % 2 + 2) % 2 == 1) {
+                cells[(i,j)] = Instantiate(cell_prefab_triangle_flipped,
+                                           IndexToWorldCoord(i, j),
+                                           Quaternion.identity);
+            } else {
+                cells[(i,j)] = Instantiate(cell_prefab, IndexToWorldCoord(i, j),
+                                           Quaternion.identity);
+            }
             cells[(i,j)].GetComponent<CellState>().coordinate = (i, j);
 
             //////// Put coordinates in cells (for debugging, if needed)
@@ -317,16 +324,6 @@ public class GridManager : MonoBehaviour, IClickableObject {
             //str += $"\n({p.x*2+1},{p.y*2-1},{p.z*2-1})";
             //cells[(i,j)].GetComponent<CellState>().set_text(str);
             ////////
-            
-            if (grid_type == GridType.Triangle) {
-                if ((i % 2 + 2) % 2 == 1) {
-                    cells[(i,j)].transform.localRotation =
-                            Quaternion.Euler(0, 0, 180f);
-                    cells[(i,j)].GetComponent<CellState>().debug_text
-                                .gameObject.transform.localRotation = 
-                            Quaternion.Euler(0, 0, 180f);
-                }
-            }
         }
     }
     

@@ -9,7 +9,7 @@ public class CellState : MonoBehaviour {
     bool image_mode;
     public GameObject selected_obj;
     public GameObject deselected_obj;
-    public TMP_Text debug_text;
+    //public TMP_Text debug_text;
 
     public (int, int) coordinate;
 
@@ -36,16 +36,16 @@ public class CellState : MonoBehaviour {
         }
     }
 
-    public void set_text(string s) {
-        debug_text.enabled = true;
-        debug_text.text = s;
-        debug_text.gameObject.transform.rotation = Quaternion.identity;
-    }
+    //public void set_text(string s) {
+    //    debug_text.enabled = true;
+    //    debug_text.text = s;
+    //    debug_text.gameObject.transform.rotation = Quaternion.identity;
+    //}
 
     void Start() {
         selected = false;
         image_mode = false;
-        debug_text.enabled = false;
+        //debug_text.enabled = false;
     }
 
     public void set_order_in_layer(int order) {
