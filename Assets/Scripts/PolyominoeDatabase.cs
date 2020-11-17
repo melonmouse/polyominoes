@@ -183,10 +183,13 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
             }
         } else {
             // load polyominoes from file
-            string path = "Assets/PolyominoesData/" +
-                          $"polyominoes_{neighborhood_type}.save";
-            Debug.Log($"Loading polyominoes from [{path}]");
-            FileStream f = File.Open(path, FileMode.Open);
+            TextAsset resourceFile = (TextAsset) Resources.Load(
+                    $"polyominoes_{neighborhood_type}");
+            //string path = Path.Combine(Application.streamingAssetsPath,
+            //              $"polyominoes_{neighborhood_type}.save");
+            //Debug.Log($"Loading polyominoes from [{path}]");
+            //FileStream f = File.Open(path, FileMode.Open);
+            MemoryStream f = new MemoryStream(resourceFile.bytes);
             BinaryFormatter bf = new BinaryFormatter();
             polyominoes_all = (Dictionary<long, Shape>[])bf.Deserialize(f);
             f.Close();
