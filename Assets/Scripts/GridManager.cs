@@ -241,7 +241,6 @@ public class GridManager : MonoBehaviour, IClickableObject {
         // and don't show it in other levels at all
         tutorial_done = neighborhood_type != NeighborhoodType.SquareNeumann ||
                         max_cell_count >= 5;
-
     }
 
     public void LoadSaveLevel() {

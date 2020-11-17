@@ -1,6 +1,10 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Runtime.Serialization;
+
 using UnityEngine;
 using UnityEngine.Assertions;
 using TMPro;
@@ -136,12 +140,56 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
         return hash;
     }
 
-    public void initialize_polymonioes() {
+    public void save_polyominoes_to_file(Dictionary<long, Shape>[] p) {
+        string path = $"/tmp/polyominoes_{neighborhood_type}.save";
+        Debug.Log($"Saving to {path}");
+        // Note; this overwrites the file at path.
+        FileStream f = File.Create(path);
+        BinaryFormatter bf = new BinaryFormatter();
+        bf.Serialize(f, p);
+        f.Close();
+    }
+
+    public void generate_polyominoes() {
+        for (int n_squares = 2; n_squares <= max_cells; n_squares++) {
+            foreach (Shape small_shape in polyominoes_all[n_squares-1].Values) {
+                foreach ((int x, int y) cell in small_shape) {
+                    foreach ((int x, int y) new_cell in GetNeighbors(cell)) {
+                        if (small_shape.Contains(new_cell)) {
+                            continue;
+                        }
+                        Shape inc_shape = new Shape(small_shape);
+                        inc_shape.Add(new_cell);
+                        inc_shape = get_canonical(inc_shape);
+                        long hash = ShapeHash(inc_shape);
+                        polyominoes_all[n_squares][hash] = inc_shape; 
+                                // no-op if duplicate
+                    }
+                }
+            }
+        }
+    }
+
+    public void initialize_polyominoes(bool generate_and_save=false) {
         polyominoes_found = new Dictionary<long, Shape>[max_cells+1];
-        polyominoes_all = new Dictionary<long, Shape>[max_cells+1];
         for (int n_squares = 1; n_squares <= max_cells; n_squares++) {
             polyominoes_found[n_squares] = new Dictionary<long, Shape>();
-            polyominoes_all[n_squares] = new Dictionary<long, Shape>();
+        }
+
+        if (generate_and_save) {
+            polyominoes_all = new Dictionary<long, Shape>[max_cells+1];
+            for (int n_squares = 1; n_squares <= max_cells; n_squares++) {
+                polyominoes_all[n_squares] = new Dictionary<long, Shape>();
+            }
+        } else {
+            // load polyominoes from file
+            string path = "Assets/PolyominoesData/" +
+                          $"polyominoes_{neighborhood_type}.save";
+            Debug.Log($"Loading polyominoes from [{path}]");
+            FileStream f = File.Open(path, FileMode.Open);
+            BinaryFormatter bf = new BinaryFormatter();
+            polyominoes_all = (Dictionary<long, Shape>[])bf.Deserialize(f);
+            f.Close();
         }
 
         Shape trivial = new Shape();
@@ -160,22 +208,10 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
             polyominoes_all[2][ShapeHash(easy)] = easy;
             polyominoes_found[2][ShapeHash(easy)] = easy;
         }
-
-        for (int n_squares = 2; n_squares <= max_cells; n_squares++) {
-            foreach (Shape small_shape in polyominoes_all[n_squares-1].Values) {
-                foreach ((int x, int y) cell in small_shape) {
-                    foreach ((int x, int y) new_cell in GetNeighbors(cell)) {
-                        if (small_shape.Contains(new_cell)) {
-                            continue;
-                        }
-                        Shape inc_shape = new Shape(small_shape); // should be deep copy
-                        inc_shape.Add(new_cell);
-                        inc_shape = get_canonical(inc_shape);
-                        long hash = ShapeHash(inc_shape);
-                        polyominoes_all[n_squares][hash] = inc_shape;  // no-op if duplicate
-                    }
-                }
-            }
+        
+        if (generate_and_save) {
+            generate_polyominoes();
+            save_polyominoes_to_file(polyominoes_all);
         }
     }
 
@@ -479,7 +515,7 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
           break;
         }
         // initialize right after
-        initialize_polymonioes();
+        initialize_polyominoes();
         if (enable_partitions) {
             initialize_partitions();
         }
