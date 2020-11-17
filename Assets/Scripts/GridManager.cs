@@ -25,6 +25,8 @@ public class GridManager : MonoBehaviour, IClickableObject {
     public PolyominoeDatabase polyominoe_database;
     public Shape selected_cells;
 
+    public List<AudioClip> cell_sounds;
+
     public int max_cell_count = 3;
     public DiscreteValueIndicator cell_count_indicator;
     public TMP_Text shape_progress_counter;
@@ -233,6 +235,7 @@ public class GridManager : MonoBehaviour, IClickableObject {
         // and don't show it in other levels at all
         tutorial_done = neighborhood_type != NeighborhoodType.SquareNeumann ||
                         max_cell_count >= 5;
+
     }
 
     public void LoadSaveLevel() {
@@ -250,6 +253,8 @@ public class GridManager : MonoBehaviour, IClickableObject {
 
         selected_cells = new Shape();
 
+        // TODO switch to other sound based on grid type
+        polyominoe_database.clip = cell_sounds[0];
     }
 
     public void SetMaxCellCount() {

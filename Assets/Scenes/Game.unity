@@ -158,6 +158,7 @@ MonoBehaviour:
   badge_drawer: {fileID: 331391845}
   badge_drawer_container: {fileID: 67699167}
   badge_drawer_cross: {fileID: 1851400337}
+  clip: {fileID: 0}
 --- !u!4 &13178713
 Transform:
   m_ObjectHideFlags: 0
@@ -464,6 +465,10 @@ MonoBehaviour:
   cell_prefab_triangle_small: {fileID: 2350803292633166, guid: a065998c4834dc439b87b8fa74ed280a, type: 3}
   cell_prefab_triangle_small_flipped: {fileID: 2700905667482595360, guid: 1b8e6cc3d3efd7bab9b114a90af9a938, type: 3}
   polyominoe_database: {fileID: 13178712}
+  cell_sounds:
+  - {fileID: 8300000, guid: 963da7aa7ce835a76a65785468c66a8c, type: 3}
+  - {fileID: 8300000, guid: 2c61b94a52d694464bd23a0e8da72f8d, type: 3}
+  - {fileID: 8300000, guid: 7560d2cfd055fab5786102a2818bedcf, type: 3}
   max_cell_count: 3
   cell_count_indicator: {fileID: 199899143}
   shape_progress_counter: {fileID: 1059666231}

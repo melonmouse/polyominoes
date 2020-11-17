@@ -94,4 +94,46 @@ public class AchievementManager : MonoBehaviour {
         achievements_shown.Add(badge);
         end_times.Add(Time.time + duration); // show badges for 4 seconds.
     }
+
+    public void PlayNote(float time, float pitch, AudioClip clip) {
+        Debug.Assert(clip != null, "Trying to play null sound.");
+        GameObject container = new GameObject();
+        DelayedDestroy dd = container.AddComponent<DelayedDestroy>();
+        dd.SetTTL(6f); // this caps the duration to 6 seconds = 12 blocks
+
+        AudioSource audio_source = container.AddComponent<AudioSource>();
+        // TODO remove that component later
+        audio_source.clip = clip;
+        audio_source.pitch = pitch;
+        audio_source.playOnAwake = false;
+        audio_source.PlayScheduled(AudioSettings.dspTime + time);
+    }
+
+    public void PlayShape(List<(float x, int y)> shape, AudioClip clip) {
+        Debug.Log("playing shape!");
+        foreach ((float x, int y) p in shape) {
+            //            // 0 (-0)
+            // C -> E: +4 // 1 (-1), 6 (-2)
+            // E -> A: +5 // 2 (-1), 7 (-2)
+            // A -> D: +5 // 3 (-1), 8 (-2)
+            // D -> G: +5 // 4 (-1), 9 (-2)
+            // G -> C: +5 // 5 (-1), 10 (-2)
+            Debug.Assert(p.y >= 0, "shapes go up!");
+            int shift_size = p.y + (int)Mathf.Round(p.x)
+                             - (int)Mathf.Round(shape.Count/2);
+            int num_key_shift = shift_size * 5 - (int)Mathf.Ceil(shift_size/5f);
+            Debug.Log($"x: {p.x}, height: {p.y}, keys: {num_key_shift}");
+
+            float single_key_pitch_shift = Mathf.Pow(2, 1/12f);
+            float total_pitch_shift = Mathf.Pow(single_key_pitch_shift,
+                                                num_key_shift);
+
+            float sec_per_beat = 60f/80f;  // sec_per_min / beat_per_min
+            PlayNote(p.x * sec_per_beat / 4f, total_pitch_shift, clip);
+            // pitch = 1 corresponds to no change
+            // pitch = 2**(1/12) is up one key (?)
+            // pitch = 2**(k/12) is up k keys (?)
+            // pitch = 2 is up one octave (?)
+        }
+    }
 }

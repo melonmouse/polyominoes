@@ -8,6 +8,7 @@ public class LevelSelecter : MonoBehaviour {
 
     public List<GameObject> level_icons;
     public List<NeighborhoodType> neigh_types;
+    public List<AudioSource> songs;
     int current_selection = 0;
     int max_level = 0;
     public GameObject next_button;
@@ -17,6 +18,8 @@ public class LevelSelecter : MonoBehaviour {
     float start_time;
     bool cooldown_finished = false;
 
+    float song_time = 0f;
+
     public void InitializeEmptySaveGame() {
         CurrentSaveGame.save = new SaveGame();
         foreach (NeighborhoodType nt in neigh_types) {
@@ -25,6 +28,37 @@ public class LevelSelecter : MonoBehaviour {
             CurrentSaveGame.save.save_levels[nt] = sl;
         }
         CurrentSaveGame.save.initialized = true;
+    }
+
+    void ChangeSong() {
+        float wall_time_in_song = 0f;
+        if (current_selection < 3) {
+            // normal speed
+            wall_time_in_song = song_time;
+        } else {
+            // double speed
+            wall_time_in_song = song_time/2f;
+        }
+
+        for (int i = 0; i < songs.Count; i++) {
+            if (i == current_selection) {
+                // we assume the song just stops if wall_time_in_song > length
+                songs[i].time = wall_time_in_song;
+                songs[i].Play();
+            } else {
+                songs[i].Pause();
+            }
+        }
+    }
+
+    void UpdateSongTime() {
+        if (current_selection < 3) {
+            // normal speed (80bpm)
+            song_time += Time.deltaTime;
+        } else {
+            // double speed (160bpm)
+            song_time += 2*Time.deltaTime;
+        }
     }
 
     void Start() {
@@ -40,6 +74,7 @@ public class LevelSelecter : MonoBehaviour {
             }
         }
 
+
         // add satelites representing score
         for (int i = 0; i < level_icons.Count; i++) {
             int score = CurrentSaveGame.save.save_levels[neigh_types[i]].score;
@@ -51,17 +86,25 @@ public class LevelSelecter : MonoBehaviour {
         max_level = LevelBariers.get_max_level();
         Debug.Log($"max_level={max_level}");
         start_time = Time.time;
+        CurrentSelectionChanged();
+    }
+
+    public void CurrentSelectionChanged() {
         UpdateNextPrevButtons();
+        ChangeSong();
+        for (int i = 0; i < level_icons.Count; i++) {
+            level_icons[i].SetActive(i == current_selection);
+        }
     }
 
     public void SelectNext() {
         current_selection = (int)Mathf.Min(current_selection + 1, max_level);
-        UpdateNextPrevButtons();
+        CurrentSelectionChanged();
     }
 
     public void SelectPrev() {
         current_selection = (int)Mathf.Max(current_selection - 1, 0);
-        UpdateNextPrevButtons();
+        CurrentSelectionChanged();
     }
 
     public void UpdateNextPrevButtons() {
@@ -107,15 +150,13 @@ public class LevelSelecter : MonoBehaviour {
             click_to_start.SetActive(true);
         }
 
-        for (int i = 0; i < level_icons.Count; i++) {
-            level_icons[i].SetActive(i == current_selection);
-        }
-
         if (!cooldown_finished) {
             if (Time.time > start_time + 0.5f) {
                 cooldown_finished = true;
                 UpdateNextPrevButtons();
             }
         }
+
+        UpdateSongTime();
     }
 }

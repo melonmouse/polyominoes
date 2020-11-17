@@ -43,6 +43,8 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
     public GameObject badge_drawer_container;
     public GameObject badge_drawer_cross;
 
+    public AudioClip clip;
+
     protected int max_cells;
     protected int n_rotations;
     protected Dictionary<long, Shape>[] polyominoes_found;
@@ -639,6 +641,20 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
         Rect bounds = new Rect(new Vector2(-65, -65), new Vector2(130, 130));
         GameObject drawing = grid_manager.draw_shape(shape, bounds, 1);
         achievement_manager.AddAchievement(drawing, duration: 4f);
+
+        List<(float x, int y)> world_shape = new List<(float x, int y)>();
+        foreach ((int x, int y) p in shape) {
+            Vector3 world_coord = grid_manager.IndexToWorldCoord(p.x, p.y);
+            // TODO change y to integer depending on grid_type
+            //float tile_height = Mathf.Sqrt(3f)/2f * 1.8f;
+            //float tile_height = 1;
+            // hex: Mathf.Sqrt(3f)/2f 
+            // triangle: Mathf.Sqrt(3f)/2f * triangle_size (triangle_size=1.8)
+            // square: 1
+
+            world_shape.Add((world_coord.x, (int)world_coord.y));
+        }
+        achievement_manager.PlayShape(world_shape, clip);
     }
 
     public void AchieveAllShape(int count) {
