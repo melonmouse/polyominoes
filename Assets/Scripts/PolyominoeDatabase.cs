@@ -141,7 +141,8 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
     }
 
     public void save_polyominoes_to_file(Dictionary<long, Shape>[] p) {
-        string path = $"/tmp/polyominoes_{neighborhood_type}.save";
+        string path = $"/tmp/polyominoes_{neighborhood_type}.bytes";
+        // Move the files to Assets/Resources/polyominoes_{}.bytes for use.
         Debug.Log($"Saving to {path}");
         // Note; this overwrites the file at path.
         FileStream f = File.Create(path);
@@ -185,10 +186,6 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
             // load polyominoes from file
             TextAsset resourceFile = (TextAsset) Resources.Load(
                     $"polyominoes_{neighborhood_type}");
-            //string path = Path.Combine(Application.streamingAssetsPath,
-            //              $"polyominoes_{neighborhood_type}.save");
-            //Debug.Log($"Loading polyominoes from [{path}]");
-            //FileStream f = File.Open(path, FileMode.Open);
             MemoryStream f = new MemoryStream(resourceFile.bytes);
             BinaryFormatter bf = new BinaryFormatter();
             polyominoes_all = (Dictionary<long, Shape>[])bf.Deserialize(f);
