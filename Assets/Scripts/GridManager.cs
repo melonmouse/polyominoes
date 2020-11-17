@@ -94,26 +94,29 @@ public class GridManager : MonoBehaviour, IClickableObject {
         return Vector3.zero;
     }
 
-    public float GetTargetOrthographicSize() {
+    public float GetTargetOrthographicSize(int cell_count=-1) {
+        if (cell_count < 0) {
+            cell_count = max_cell_count;
+        }
         float current_height = Camera.main.orthographicSize * 2;
         float current_width = Camera.main.aspect * current_height;
-        float min_size = max_cell_count + 2;
+        float min_size = cell_count + 2;
         if (neighborhood_type == NeighborhoodType.TriangleNeumann) {
-            //min_size = (int)Mathf.Ceil(max_cell_count + 2);
+            //min_size = (int)Mathf.Ceil(cell_count + 2);
         }
         if (neighborhood_type == NeighborhoodType.TriangleMoore) {
-            min_size = 2*max_cell_count + 4;
+            min_size = 2*cell_count + 4;
         }
         if (neighborhood_type == NeighborhoodType.Hexagon) {
-            //min_size = (int)Mathf.Ceil(1f*max_cell_count+2*1.2f);
+            //min_size = (int)Mathf.Ceil(1f*cell_count+2*1.2f);
         }
         if (neighborhood_type == NeighborhoodType.HexagonJump) {
-            min_size = (int)Mathf.Ceil(2*max_cell_count+4f);
+            min_size = (int)Mathf.Ceil(2*cell_count+4f);
         }
 
         float target_orthographic_size;
         // we want width >= 
-        // and height >= max_cell_count+2
+        // and height >= cell_count+2
         target_orthographic_size =
                 Mathf.Max(1.25f*min_size / 2,  // height fits
                           min_size / (2 * Camera.main.aspect));  // width fits
@@ -248,12 +251,12 @@ public class GridManager : MonoBehaviour, IClickableObject {
         Debug.Assert(neighborhood_type == CurrentSaveGame.save.current_level);
         grid_type = PolyominoeDatabase.neighborhood_to_grid[neighborhood_type];
 
-        InitializeGrid();
-
         polyominoe_database.SetMode(neighborhood_type);
         polyominoe_database.AddFoundHashes(save_level.hashes_of_shapes_found);
 
         SetMaxCellCount();
+
+        InitializeGrid();
 
         selected_cells = new Shape();
 
@@ -301,16 +304,33 @@ public class GridManager : MonoBehaviour, IClickableObject {
         }
 
         int size = 30; // should be sufficient for all levels and aspect ratios
+        float max_orthographic_size =
+                GetTargetOrthographicSize(polyominoe_database.GetMaxCells());
+        Debug.Log($"orth size max: {max_orthographic_size}");
+
+        float max_world_height = 2 * max_orthographic_size;
+        float max_world_width = max_world_height * Camera.main.aspect;
+
+        Debug.Log($"max world size: {max_world_height}x{max_world_width}");
+
+        float max_cell_y = max_world_height/2f + 2f;
+        float max_cell_x = max_world_width/2f + 2f;
+        
         cells = new Dictionary<(int, int),GameObject>();
         for (int i = -size; i<size; i++)
         for (int j = -size; j<size; j++) {
             // TODO? use a shape / draw_cells here
+            Vector3 cell_pos = IndexToWorldCoord(i, j);
+            if (cell_pos.x < -max_cell_x || cell_pos.x > max_cell_x ||
+                cell_pos.y < -max_cell_y || cell_pos.y > max_cell_y) {
+                continue;
+            }
             if (grid_type == GridType.Triangle && (i % 2 + 2) % 2 == 1) {
                 cells[(i,j)] = Instantiate(cell_prefab_triangle_flipped,
-                                           IndexToWorldCoord(i, j),
+                                           cell_pos,
                                            Quaternion.identity);
             } else {
-                cells[(i,j)] = Instantiate(cell_prefab, IndexToWorldCoord(i, j),
+                cells[(i,j)] = Instantiate(cell_prefab, cell_pos,
                                            Quaternion.identity);
             }
             cells[(i,j)].GetComponent<CellState>().coordinate = (i, j);
