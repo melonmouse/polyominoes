@@ -26,6 +26,7 @@ public class GridManager : MonoBehaviour, IClickableObject {
     public Shape selected_cells;
 
     public List<AudioClip> cell_sounds;
+    public List<AudioClip> cell_sounds_long;
 
     public int max_cell_count = 3;
     public DiscreteValueIndicator cell_count_indicator;
@@ -40,7 +41,8 @@ public class GridManager : MonoBehaviour, IClickableObject {
 
     GridType grid_type = GridType.Hexagon;
     //NeighborhoodType neighborhood_type = NeighborhoodType.SquareNeumann;
-    NeighborhoodType neighborhood_type = NeighborhoodType.TriangleNeumann;
+    //NeighborhoodType neighborhood_type = NeighborhoodType.TriangleNeumann;
+    NeighborhoodType neighborhood_type = NeighborhoodType.Hexagon;
 
     bool initialized_camera_size = false;
 
@@ -63,12 +65,12 @@ public class GridManager : MonoBehaviour, IClickableObject {
           case GridType.Square:
             return ((int)Mathf.Floor(pos.x), (int)Mathf.Floor(pos.y));
           case GridType.Hexagon:
-            // TODO round in a way that is perfect
+            // NOTE: does not round perfectly - only accurate near center.
             return ((int)Mathf.Round(2/3f * pos.x / hex_size),
                     (int)Mathf.Round((-1/3f * pos.x +
                                       Mathf.Sqrt(3f)/3f * pos.y) / hex_size));
           case GridType.Triangle:
-            // TODO round in a way that is perfect
+            // NOTE: does not round perfectly - only accurate near center.
             return ((int)Mathf.Round((pos.x - pos.y / Mathf.Sqrt(3f)) *
                                      2/triangle_size),
                     (int)Mathf.Round(pos.y / Mathf.Sqrt(3f) * 2/triangle_size));
@@ -239,7 +241,8 @@ public class GridManager : MonoBehaviour, IClickableObject {
     }
 
     public void LoadSaveLevel() {
-        SaveLevel save_level = CurrentSaveGame.save.save_levels[CurrentSaveGame.save.current_level];
+        SaveLevel save_level = CurrentSaveGame.save.save_levels[
+                CurrentSaveGame.save.current_level];
         neighborhood_type = save_level.neighborhood_type;
         Debug.Assert(neighborhood_type == CurrentSaveGame.save.current_level);
         grid_type = PolyominoeDatabase.neighborhood_to_grid[neighborhood_type];
@@ -254,7 +257,20 @@ public class GridManager : MonoBehaviour, IClickableObject {
         selected_cells = new Shape();
 
         // TODO switch to other sound based on grid type
-        polyominoe_database.clip = cell_sounds[0];
+        switch (grid_type) {
+          case GridType.Square:
+            polyominoe_database.clip = cell_sounds[0];
+            polyominoe_database.clip_long = cell_sounds_long[0];
+          break;
+          case GridType.Triangle:
+            polyominoe_database.clip = cell_sounds[1];
+            polyominoe_database.clip_long = cell_sounds_long[1];
+          break;
+          case GridType.Hexagon:
+            polyominoe_database.clip = cell_sounds[2];
+            polyominoe_database.clip_long = cell_sounds_long[2];
+          break;
+        }
     }
 
     public void SetMaxCellCount() {
@@ -273,13 +289,13 @@ public class GridManager : MonoBehaviour, IClickableObject {
             cell_prefab = cell_prefab_square;
             cell_prefab_small = cell_prefab_square_small;
           break;
-          case GridType.Hexagon:
-            cell_prefab = cell_prefab_hex;
-            cell_prefab_small = cell_prefab_hex_small;
-          break;
           case GridType.Triangle:
             cell_prefab = cell_prefab_triangle;
             cell_prefab_small = cell_prefab_triangle_small;
+          break;
+          case GridType.Hexagon:
+            cell_prefab = cell_prefab_hex;
+            cell_prefab_small = cell_prefab_hex_small;
           break;
         }
 
@@ -364,6 +380,7 @@ public class GridManager : MonoBehaviour, IClickableObject {
             foreach ((int x, int y) cell in achieved_shape) {
                 GameObject duplicate = Instantiate(cells[(cell.x, cell.y)]);
                 duplicate.transform.SetParent(parent.transform);
+                //// TODO Do i really need to set order_in_layer?
                 duplicate.GetComponent<CellState>().set_order_in_layer(2);
                 //// choose if achieved shapes get removed or not!
                 //// I think its better to not remove them.
@@ -407,7 +424,8 @@ public class GridManager : MonoBehaviour, IClickableObject {
         // If level is maxed out, replace the counter
         Debug.Log($"max_cell_count={max_cell_count}");
         Debug.Log($"database_max={polyominoe_database.GetMaxCells()}");
-        if (max_cell_count == polyominoe_database.GetMaxCells()) {
+        if (polyominoe_database.biggest_complete_polyominoe_set() ==
+            polyominoe_database.GetMaxCells()) {
             shape_progress_counter.text = "DONE!";
             return;
         }
@@ -454,7 +472,8 @@ public class GridManager : MonoBehaviour, IClickableObject {
             CellState c = cell.GetComponent<CellState>();
             c.set_selected(true);
             c.set_image_mode(true);
-            c.set_order_in_layer(order_in_layer);
+            // TODO do I really need to set order in layer here?
+            //c.set_order_in_layer(order_in_layer);
             c.get_rect_transform().sizeDelta =
                     new Vector2(block_size, block_size);
         }

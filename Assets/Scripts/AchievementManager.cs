@@ -102,16 +102,16 @@ public class AchievementManager : MonoBehaviour {
         dd.SetTTL(6f); // this caps the duration to 6 seconds = 12 blocks
 
         AudioSource audio_source = container.AddComponent<AudioSource>();
-        // TODO remove that component later
         audio_source.clip = clip;
         audio_source.pitch = pitch;
         audio_source.playOnAwake = false;
         audio_source.PlayScheduled(AudioSettings.dspTime + time);
     }
 
-    public void PlayShape(List<(float x, int y)> shape, AudioClip clip) {
+    public void PlayShape(Shape shape, AudioClip clip,
+                          AudioClip clip_long, GridType grid_type) {
         Debug.Log("playing shape!");
-        foreach ((float x, int y) p in shape) {
+        foreach ((int x, int y) p in shape) {
             //            // 0 (-0)
             // C -> E: +4 // 1 (-1), 6 (-2)
             // E -> A: +5 // 2 (-1), 7 (-2)
@@ -119,8 +119,7 @@ public class AchievementManager : MonoBehaviour {
             // D -> G: +5 // 4 (-1), 9 (-2)
             // G -> C: +5 // 5 (-1), 10 (-2)
             Debug.Assert(p.y >= 0, "shapes go up!");
-            int shift_size = p.y + (int)Mathf.Round(p.x)
-                             - (int)Mathf.Round(shape.Count/2);
+            int shift_size = p.y + p.x - (int)Mathf.Round(shape.Count/2);
             int num_key_shift = shift_size * 5 - (int)Mathf.Ceil(shift_size/5f);
             Debug.Log($"x: {p.x}, height: {p.y}, keys: {num_key_shift}");
 
@@ -129,7 +128,18 @@ public class AchievementManager : MonoBehaviour {
                                                 num_key_shift);
 
             float sec_per_beat = 60f/80f;  // sec_per_min / beat_per_min
-            PlayNote(p.x * sec_per_beat / 4f, total_pitch_shift, clip);
+            int horizontal_step_size = 1;
+            if (grid_type == GridType.Hexagon) {
+                horizontal_step_size = 2;
+                // Since hexagons are 'staggered', the next hex on the same row
+                // is at x+2.
+            }
+            if (shape.Contains((p.x+horizontal_step_size, p.y))) {
+                PlayNote(p.x * sec_per_beat / 4f, total_pitch_shift, clip);
+            } else {
+                PlayNote(p.x * sec_per_beat / 4f, total_pitch_shift, clip_long);
+            }
+            // TODO if there is no
             // pitch = 1 corresponds to no change
             // pitch = 2**(1/12) is up one key (?)
             // pitch = 2**(k/12) is up k keys (?)

@@ -7,10 +7,8 @@ using UnityEngine.Assertions;
 public class CellState : MonoBehaviour {
     bool selected;
     bool image_mode;
-    public GameObject selected_sprite;
-    public GameObject deselected_sprite;
-    public GameObject selected_image;
-    public GameObject deselected_image;
+    public GameObject selected_obj;
+    public GameObject deselected_obj;
     public TMP_Text debug_text;
 
     public (int, int) coordinate;
@@ -20,10 +18,8 @@ public class CellState : MonoBehaviour {
     }
 
     public void update_gameobject() {
-        selected_sprite.SetActive(selected && (!image_mode));
-        deselected_sprite.SetActive((!selected) && (!image_mode));
-        selected_image.SetActive(selected && image_mode);
-        deselected_image.SetActive((!selected) && image_mode);
+        selected_obj.SetActive(selected);
+        deselected_obj.SetActive(!selected);
     }
 
     public void set_selected(bool s) {
@@ -53,25 +49,26 @@ public class CellState : MonoBehaviour {
     }
 
     public void set_order_in_layer(int order) {
-        selected_sprite.GetComponent<Renderer>().sortingOrder = order;
-        deselected_sprite.GetComponent<Renderer>().sortingOrder = order;
+        Assert.IsFalse(image_mode, "No sorting order in image mode.");
+        selected_obj.GetComponent<Renderer>().sortingOrder = order;
+        deselected_obj.GetComponent<Renderer>().sortingOrder = order;
     }
 
     public Rect get_rect() {
         Assert.IsTrue(image_mode, "No bounding rect in sprite mode.");
         if (selected) {
-            return selected_image.GetComponent<RectTransform>().rect;
+            return selected_obj.GetComponent<RectTransform>().rect;
         } else {
-            return deselected_image.GetComponent<RectTransform>().rect;
+            return deselected_obj.GetComponent<RectTransform>().rect;
         }
     }
 
     public RectTransform get_rect_transform() {
         Assert.IsTrue(image_mode, "No bounding rect in sprite mode.");
         if (selected) {
-            return selected_image.GetComponent<RectTransform>();
+            return selected_obj.GetComponent<RectTransform>();
         } else {
-            return deselected_image.GetComponent<RectTransform>();
+            return deselected_obj.GetComponent<RectTransform>();
         }
     }
 }

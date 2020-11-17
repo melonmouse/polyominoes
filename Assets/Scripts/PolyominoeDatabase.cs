@@ -44,6 +44,7 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
     public GameObject badge_drawer_cross;
 
     public AudioClip clip;
+    public AudioClip clip_long;
 
     protected int max_cells;
     protected int n_rotations;
@@ -456,10 +457,10 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
             //        brz,slv,gld,plat
           break;
           case NeighborhoodType.HexagonJump:
-            max_cells = 6; // the level finishes after this (675)
-            n_rotations = 6;
+            max_cells = 5; // the level finishes after this (675)
+            n_rotations = 5;
             grid_type = GridType.Hexagon;
-            // 1, 1, 2, 9, 70, 675, 7863, 94721  (NOT ON OEIS)
+            // 1, 2, 9, 70, 675, 7863, 94721  (NOT ON OEIS)
             //     brz,slv,gld,plat
           break;
           case NeighborhoodType.TriangleNeumann:
@@ -642,19 +643,33 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
         GameObject drawing = grid_manager.draw_shape(shape, bounds, 1);
         achievement_manager.AddAchievement(drawing, duration: 4f);
 
-        List<(float x, int y)> world_shape = new List<(float x, int y)>();
+        Shape world_shape = new Shape();
+        // Go to orthogonal coordinates (which may contain gaps)
         foreach ((int x, int y) p in shape) {
             Vector3 world_coord = grid_manager.IndexToWorldCoord(p.x, p.y);
-            // TODO change y to integer depending on grid_type
-            //float tile_height = Mathf.Sqrt(3f)/2f * 1.8f;
-            //float tile_height = 1;
-            // hex: Mathf.Sqrt(3f)/2f 
-            // triangle: Mathf.Sqrt(3f)/2f * triangle_size (triangle_size=1.8)
-            // square: 1
-
-            world_shape.Add((world_coord.x, (int)world_coord.y));
+            float tile_height = 0;
+            float tile_width = 0;
+            switch (grid_type) {
+              case GridType.Square:
+                tile_height = 1;
+                tile_width = 1;
+              break;
+              case GridType.Triangle:
+                tile_height = Mathf.Sqrt(3f)/2f * 1.8f;
+                tile_width = 1/2f * 1.8f;
+              break;
+              case GridType.Hexagon:
+                tile_height = Mathf.Sqrt(3f)/2f * 0.6f;
+                tile_width = 3f/2f * 0.6f;
+              break;
+              default:
+                Debug.Assert(false, "Unsupported GridType");
+              break;
+            }
+            world_shape.Add(((int)Mathf.Round(world_coord.x / tile_width),
+                             (int)Mathf.Round(world_coord.y / tile_height)));
         }
-        achievement_manager.PlayShape(world_shape, clip);
+        achievement_manager.PlayShape(world_shape, clip, clip_long, grid_type);
     }
 
     public void AchieveAllShape(int count) {
