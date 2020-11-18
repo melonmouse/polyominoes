@@ -212,7 +212,12 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
         if (generate_and_save) {
             generate_polyominoes();
             save_polyominoes_to_file(polyominoes_all);
+
+            for (int n_squares = 2; n_squares <= max_cells; n_squares++) {
+                Debug.Log($"{n_squares} = {polyominoes_all[n_squares].Count}");
+            }
         }
+
     }
 
     public void initialize_partitions() {
@@ -433,8 +438,8 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
             dy = new List<int>{  0,  0,  1, -1, -1,  1};
           break;
           case NeighborhoodType.HexagonJump:
-            dx = new List<int>{  2, -2,  0,  0,  2, -2, 1,-1,-2,-1, 1, 2};
-            dy = new List<int>{  0,  0,  2, -2, -2,  2, 1, 2, 1,-1,-2,-1};
+            dx = new List<int>{ 2, 1, 0,-1,-2,-2,-2,-1, 0, 1, 2, 2};
+            dy = new List<int>{ 0, 1, 2, 2, 2, 1, 0,-1,-2,-2,-2,-1};
           break;
           case NeighborhoodType.TriangleNeumann:
             if (cell.x%2 == 0) {  // if x is even, the triangle points up
@@ -494,7 +499,7 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
           break;
           case NeighborhoodType.HexagonJump:
             max_cells = 5; // the level finishes after this (675)
-            n_rotations = 5;
+            n_rotations = 6;
             grid_type = GridType.Hexagon;
             // 1, 2, 9, 70, 675, 7863, 94721  (NOT ON OEIS)
             //     brz,slv,gld,plat
