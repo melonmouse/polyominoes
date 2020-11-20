@@ -1,0 +1,1 @@
+mcs -langversion:experimental -out:a.exe polyominoes.cs && echo "done compiling, running" && time mono a.exe

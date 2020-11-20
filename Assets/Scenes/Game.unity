@@ -474,7 +474,7 @@ MonoBehaviour:
   cell_sounds_long:
   - {fileID: 8300000, guid: 06f0b34b69a88f25984d5bd256f4c86d, type: 3}
   - {fileID: 8300000, guid: 20a43a4a6fb3cab8abb69927bcbf6f93, type: 3}
-  - {fileID: 8300000, guid: 06f0b34b69a88f25984d5bd256f4c86d, type: 3}
+  - {fileID: 8300000, guid: a6605586051337947948bc36e0eecda6, type: 3}
   max_cell_count: 3
   cell_count_indicator: {fileID: 199899143}
   shape_progress_counter: {fileID: 1059666231}

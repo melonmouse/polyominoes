@@ -407,6 +407,8 @@ public class GridManager : MonoBehaviour, IClickableObject {
             parent.AddComponent<TRotator>();
             parent.AddComponent<ObjectLerper>();
             parent.GetComponent<ObjectLerper>().rect_transform_mode = false;
+            DelayedDestroy dd = parent.AddComponent<DelayedDestroy>();
+            dd.SetTTL(10f);
 
             float height = Camera.main.orthographicSize*2;
             float width = height * Camera.main.aspect;

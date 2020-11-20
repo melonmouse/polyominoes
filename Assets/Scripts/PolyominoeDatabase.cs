@@ -171,7 +171,7 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
         }
     }
 
-    public void initialize_polyominoes(bool generate_and_save=false) {
+    public void initialize_polyominoes(bool generate_and_save=true) {  // !!!!
         polyominoes_found = new Dictionary<long, Shape>[max_cells+1];
         for (int n_squares = 1; n_squares <= max_cells; n_squares++) {
             polyominoes_found[n_squares] = new Dictionary<long, Shape>();
@@ -501,7 +501,7 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
             max_cells = 5; // the level finishes after this (675)
             n_rotations = 6;
             grid_type = GridType.Hexagon;
-            // 1, 2, 9, 70, 675, 7863, 94721  (NOT ON OEIS)
+            // 1, 2, 9, 70, 675, 7869, 94911, 1181821  (NOT ON OEIS)
             //     brz,slv,gld,plat
           break;
           case NeighborhoodType.TriangleNeumann:
@@ -515,7 +515,7 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
             max_cells = 5; // the level finishes after this (528)
             n_rotations = 6;
             grid_type = GridType.Triangle;
-            // 1, 3, 11, 75, 528, 4573, 40497, 372453  (NOT ON OEIS)
+            // 1, 3, 11, 75, 528, 4584, 40609, 373981, 3493723  (NOT ON OEIS)
             //      slv,gld,plat
           break;
         }
@@ -524,10 +524,6 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
         if (enable_partitions) {
             initialize_partitions();
         }
-
-        //for (int i = 1; i<= max_cells; i++) {
-        //    Debug.Log($"{i}: {polyominoes_all[i].Count}");
-        //}
     }
 
     public List<Shape> query(Shape cells) {
