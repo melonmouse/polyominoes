@@ -132,7 +132,7 @@ public class LevelSelecter : MonoBehaviour {
             sl.neighborhood_type = nt;
         }
         CurrentSaveGame.save.current_level = nt;
-        SceneManager.LoadScene("Game");
+        SceneManager.LoadSceneAsync("Game");
     }
 
     void Update() {

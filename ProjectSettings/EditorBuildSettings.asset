@@ -6,7 +6,10 @@ EditorBuildSettings:
   serializedVersion: 2
   m_Scenes:
   - enabled: 1
-    path: Assets/Scenes/Menu.unity
+    path: Assets/Scenes/MelonMouseSplash.unity
+    guid: 5649450367aa21a7996885f0d4f32b48
+  - enabled: 1
+    path: Assets/Scenes/LevelSelect.unity
     guid: 6813ced6fe912dd1aa51cdc1a1fc23c4
   - enabled: 1
     path: Assets/Scenes/Game.unity

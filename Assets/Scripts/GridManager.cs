@@ -219,7 +219,7 @@ public class GridManager : MonoBehaviour, IClickableObject {
 
     public void SaveAndExit() {
         StoreSaveLevel();
-        SceneManager.LoadScene("Menu");
+        SceneManager.LoadSceneAsync("LevelSelect");
     }
 
     public void Start() {
