@@ -171,7 +171,7 @@ public class PolyominoeDatabase : MonoBehaviour, IClickableObject {
         }
     }
 
-    public void initialize_polyominoes(bool generate_and_save=true) {  // !!!!
+    public void initialize_polyominoes(bool generate_and_save=false) {
         polyominoes_found = new Dictionary<long, Shape>[max_cells+1];
         for (int n_squares = 1; n_squares <= max_cells; n_squares++) {
             polyominoes_found[n_squares] = new Dictionary<long, Shape>();
