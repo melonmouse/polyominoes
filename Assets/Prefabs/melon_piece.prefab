@@ -10,6 +10,7 @@ GameObject:
   m_Component:
   - component: {fileID: 1364570408460624593}
   - component: {fileID: 1364570408460624592}
+  - component: {fileID: -4631393432566381791}
   - component: {fileID: 1364570408460624599}
   - component: {fileID: 1364570408460624598}
   m_Layer: 0
@@ -84,7 +85,7 @@ SpriteRenderer:
   m_WasSpriteAssigned: 1
   m_MaskInteraction: 0
   m_SpriteSortPoint: 0
---- !u!114 &1364570408460624599
+--- !u!114 &-4631393432566381791
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -92,6 +93,26 @@ MonoBehaviour:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1364570408460624595}
   m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 22018c89bdfc32718b9c7995340e7a55, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  friction_coefficient: 0.99
+  angular_friction_coefficient: 0.99
+  gravity: {x: 0, y: -10, z: 0}
+  initial_speed_expression: 5+r*4
+  initial_angle_expression: sign(r-0.5)*50+(r-0.5)*100
+  initial_angular_momentum_expression: (r-0.5)*2*360*2
+  initial_localScale_expression: 0.3+0.3*pow(r,2)
+  init_on_start: 0
+--- !u!114 &1364570408460624599
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1364570408460624595}
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 2e98c34e88a26f111a5ef648de014d56, type: 3}
   m_Name: 

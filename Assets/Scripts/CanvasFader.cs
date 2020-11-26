@@ -16,8 +16,8 @@ public class CanvasFader : MonoBehaviour {
 
     void Start() {
         image = gameObject.GetComponent<Image>();
-        UpdateAlpha();
         start_time = Time.time;
+        UpdateAlpha();
     }
 
     public void UpdateAlpha() {

@@ -187,6 +187,8 @@ public class Evaluator {
 
     static public double Eval(string expression) {
         // NOTE: this function is not meant to be fast
+        // Based on some primitive benchmarks, the overhead is in the order
+        // of ~0.01 - 6ms per Eval call for moderately complicated functions.
         // If fastness is required, try using EvalSimple or look for alts.
         expression = expression.Replace("M_PI", $"{Math.PI}");
         expression = expression.Replace("M_E", $"{Math.E}");

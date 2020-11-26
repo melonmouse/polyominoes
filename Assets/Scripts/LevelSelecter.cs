@@ -146,7 +146,7 @@ public class LevelSelecter : MonoBehaviour {
             StartGame();
         }
 
-        if (max_level == 0 && Time.time > 6f) {
+        if (max_level == 0 && Time.time > start_time + 6f) {
             click_to_start.SetActive(true);
         }
 

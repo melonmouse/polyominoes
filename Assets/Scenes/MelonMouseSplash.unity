@@ -342,7 +342,7 @@ GameObject:
   - component: {fileID: 630959014}
   - component: {fileID: 630959016}
   - component: {fileID: 630959015}
-  - component: {fileID: 630959017}
+  - component: {fileID: 630959018}
   m_Layer: 5
   m_Name: FadeInPanel
   m_TagString: Untagged
@@ -407,7 +407,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 630959013}
   m_CullTransparentMesh: 0
---- !u!114 &630959017
+--- !u!114 &630959018
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -416,10 +416,12 @@ MonoBehaviour:
   m_GameObject: {fileID: 630959013}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 75541bedf1cf9c3f4b24a53dc8c04169, type: 3}
+  m_Script: {fileID: 11500000, guid: 9b8e364f3898c0a59b41fc37fc5513e7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  alpha_expression: clamp(2*(1-t), 0, 1)
+  fade_in: 1
+  slope: 2
+  offset: 1
 --- !u!1 &734587652
 GameObject:
   m_ObjectHideFlags: 0
@@ -429,6 +431,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 734587654}
+  - component: {fileID: 734587655}
   - component: {fileID: 734587653}
   m_Layer: 0
   m_Name: MelonSpawner
@@ -444,7 +447,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 734587652}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 332d382b0c153de838c2d970e7299d09, type: 3}
   m_Name: 
@@ -467,6 +470,21 @@ Transform:
   m_Father: {fileID: 56516448}
   m_RootOrder: 1
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &734587655
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 734587652}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 277881f6d02cf6713b2bce4fc7effc7f, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  prefab: {fileID: 1364570408460624595, guid: 2b4bd9eb86115c8a192294e43d770af3, type: 3}
+  sec_per_prefab: 0.5
+  pool_size: 300
 --- !u!1 &791512840
 GameObject:
   m_ObjectHideFlags: 0
@@ -863,6 +881,7 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 2040052484}
+  - component: {fileID: 2040052485}
   - component: {fileID: 2040052483}
   m_Layer: 0
   m_Name: Alternator
@@ -878,7 +897,7 @@ MonoBehaviour:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2040052482}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 622c5ebceb110b9cba49aece1a1bc3cf, type: 3}
   m_Name: 
@@ -901,6 +920,19 @@ Transform:
   m_Father: {fileID: 56516448}
   m_RootOrder: 0
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2040052485
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2040052482}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: a95418d141879fd24a3eeb77999ff0b7, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sec_per_child: 0.5
 --- !u!1 &2053508040
 GameObject:
   m_ObjectHideFlags: 0
@@ -912,7 +944,7 @@ GameObject:
   - component: {fileID: 2053508041}
   - component: {fileID: 2053508043}
   - component: {fileID: 2053508042}
-  - component: {fileID: 2053508044}
+  - component: {fileID: 2053508045}
   m_Layer: 5
   m_Name: FadeOutPanel
   m_TagString: Untagged
@@ -977,7 +1009,7 @@ CanvasRenderer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 2053508040}
   m_CullTransparentMesh: 0
---- !u!114 &2053508044
+--- !u!114 &2053508045
 MonoBehaviour:
   m_ObjectHideFlags: 0
   m_CorrespondingSourceObject: {fileID: 0}
@@ -986,7 +1018,9 @@ MonoBehaviour:
   m_GameObject: {fileID: 2053508040}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 75541bedf1cf9c3f4b24a53dc8c04169, type: 3}
+  m_Script: {fileID: 11500000, guid: 9b8e364f3898c0a59b41fc37fc5513e7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  alpha_expression: clamp(2*(t-4.5), 0, 1)
+  fade_in: 0
+  slope: 2
+  offset: 4.5
